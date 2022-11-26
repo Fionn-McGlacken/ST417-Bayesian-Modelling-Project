@@ -34,6 +34,9 @@ data$est_time
 ```
 
 ```{r}
+data$est_time <- sub('to', '-', data$est_time)
+data$est_time <- sub('half an hour', '30', data$est_time)
+
 # convert hours to minutes
 # get mean of range
 hours <- c('hours', 'hrs')
@@ -43,11 +46,16 @@ temp_table = read.table(text=new_hours, sep='-', header=FALSE) * 60
 means = rowMeans(temp_table, na.rm=TRUE)
 data$est_time[cond1] <- means
 
+cond2 <- grepl("[^0-9.-]", data$est_time)
+new_rows = str_remove_all(data$est_time[cond2], "[^0-9.-]")
+data$est_time[cond2] <- new_rows
+
 # get mean of range
 cond3 <- grepl('^(\\d+)-(\\d+)$', data$est_time)
 data$est_time[cond3] <- rowMeans(read.table(text = data$est_time[cond3],
      sep = '-', header = FALSE), na.rm = TRUE)
 ```
+
 
 ```{r}
 data$est_time
