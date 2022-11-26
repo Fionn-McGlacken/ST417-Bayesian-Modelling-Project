@@ -15,6 +15,7 @@ library(dplyr)
 
 ```{r}
 data <- read.csv('data.csv')
+
 # est = estimated
 new_names = c('timestamp', 'est_time', 'est_distance', 'est_cost', 'est_transport', 'year_group', 'time', 'start_time', 'distance', 'cost', 'transport', 'origin')
 colnames(data) <- new_names
@@ -25,27 +26,23 @@ colnames(data) <- new_names
 ```
 
 ```{r}
-data <- data %>% mutate(timestamp = as.Date(timestamp))
-data <- data %>% mutate(day = weekdays(timestamp))
-```
+strip_data <- function(column) {
+  matcher = "[^0-9.-]"
+  cond <- grepl(matcher, column)
+  stripped_rows = str_remove_all(column[cond], matcher)
+  column[cond] <- stripped_rows
+  return(column)
+}
 
-
-```{r}
-data$est_time
-```
-
-
-```{r}
 scale_data <- function(column, to_match, scale) {
   matcher = paste(to_match, collapse='|')
   cond = grepl(matcher, column)
-  stripped_rows = str_remove_all(column[cond], to_match)
+  stripped_rows = str_remove_all(column[cond], "[^0-9.-]")
+  stripped_rows = as.numeric(stripped_rows)
   column[cond] <- stripped_rows * scale
   return(column)
 }
-```
 
-```{r}
 avg_range <- function(column) {
   matcher = '^(\\d+)-(\\d+)$'
   cond <- grepl(matcher, column)
@@ -53,9 +50,7 @@ avg_range <- function(column) {
      sep = '-', header = FALSE), na.rm = TRUE)
   return(column)
 }
-```
 
-```{r}
 scale_and_avg_range <- function(column, to_match, scale) {
   matcher = paste(to_match, collapse='|')
   cond = grepl(matcher, column)
@@ -66,37 +61,28 @@ scale_and_avg_range <- function(column, to_match, scale) {
 }
 ```
 
-
 ```{r}
+data <- data %>% mutate(timestamp = as.Date(timestamp))
+data <- data %>% mutate(day = weekdays(timestamp))
+
 data$est_time <- sub('to', '-', data$est_time)
 data$est_time <- sub('half an hour', '30', data$est_time)
-
-# convert hours to minutes
-# get mean of range
-hours <- c('hours', 'hrs')
-cond1 <- grepl(paste(hours, collapse="|"), data$est_time)
-new_hours = str_remove(data$est_time[cond], hours)
-temp_table = read.table(text=new_hours, sep='-', header=FALSE) * 60
-means = rowMeans(temp_table, na.rm=TRUE)
-data$est_time[cond1] <- means
-
-cond2 <- grepl("[^0-9.-]", data$est_time)
-new_rows = str_remove_all(data$est_time[cond2], "[^0-9.-]")
-data$est_time[cond2] <- new_rows
-
-# get mean of range
-cond3 <- grepl('^(\\d+)-(\\d+)$', data$est_time)
-data$est_time[cond3] <- rowMeans(read.table(text = data$est_time[cond3],
-     sep = '-', header = FALSE), na.rm = TRUE)
-
+hours = c('hours', 'hrs')
+data$est_time <- scale_and_avg_range(data$est_time, hours, 60)
+data$est_time <- strip_data(data$est_time)
+data$est_time <- avg_range(data$est_time)
 data <- data %>% mutate(est_time = as.numeric(est_time))
-```
 
+data$est_distance <- sub('or', '-', data$est_distance)
+data$est_distance <- strip_data(data$est_distance)
+data$est_distance <- avg_range(data$est_distance)
+data <- data %>% mutate(est_distance = as.numeric(est_distance))
 
-```{r}
-data$est_time
-```
-```{r}
-data[3]
+data$est_cost <- sub('/', '-', data$est_cost)
+cents = c('cents')
+data$est_cost <- scale_data(data$est_cost, cents, 0.01)
+data$est_cost <- strip_data(data$est_cost)
+data$est_cost <- avg_range(data$est_cost)
+data <- data %>% mutate(est_cost = as.numeric(est_cost))
 ```
 
