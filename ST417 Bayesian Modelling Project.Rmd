@@ -7,10 +7,12 @@ output: github_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-install.packages(dplyr)
-install.stringr
-library(stringr)
-library(dplyr)
+# install.packages('dplyr')
+# install.packages('stringr')
+# install.packages('lubridate')
+library('stringr')
+library('dplyr')
+library('lubridate')
 ```
 
 ```{r}
@@ -84,5 +86,30 @@ data$est_cost <- scale_data(data$est_cost, cents, 0.01)
 data$est_cost <- strip_data(data$est_cost)
 data$est_cost <- avg_range(data$est_cost)
 data <- data %>% mutate(est_cost = as.numeric(est_cost))
+
+data$time <- strip_data(data$time)
+data <- data %>% mutate(time = as.numeric(time))
+data$start_time = as.POSIXct(paste(data$timestamp, data$start_time), format='%Y-%m-%d %H:%M')
+
+# value entered in wrong column
+data[52, 9] <- data[52, 10]
+data$distance <- sub('Less than a kilometre', '1', data$distance)
+data$distance <- strip_data(data$distance)
+data <- data %>% mutate(distance = as.numeric(distance))
+
+data[52, 10] <- NA
+data[63, 10] <- '0'
+zeros = c('Nothing', 'None')
+for (i in zeros) {
+  data$cost <- sub(i, '0', data$cost)
+}
+data$cost <- gsub('Less than a kilometre', paste(zeros, collapse='|'), data$cost)
+costs = c('cent')
+data$cost <- scale_data(data$cost, costs, 0.01)
+data[3, 10] <- 0.8
+data <- data %>% mutate(cost = as.numeric(cost))
 ```
+
+
+
 
