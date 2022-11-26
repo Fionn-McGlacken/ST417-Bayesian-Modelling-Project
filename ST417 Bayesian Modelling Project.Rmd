@@ -15,24 +15,40 @@ library(dplyr)
 
 ```{r}
 data <- read.csv('data.csv')
-colnames(data)
-```
-
-```{r}
+# est = estimated
 new_names = c('timestamp', 'est_time', 'est_distance', 'est_cost', 'est_transport', 'year_group', 'time', 'start_time', 'distance', 'cost', 'transport', 'origin')
 colnames(data) <- new_names
-colnames(data)
 ```
-
 
 ```{r}
 # glimpse(data)
 ```
 
 ```{r}
-# remove_words <- c('AM GMT', 'PM GMT')
 data <- data %>% mutate(timestamp = as.Date(timestamp))
 data <- data %>% mutate(day = weekdays(timestamp))
 ```
 
+```{r}
+data$est_time
+```
 
+```{r}
+# convert hours to minutes
+# get mean of range
+hours <- c('hours', 'hrs')
+cond1 <- grepl(paste(hours, collapse="|"), data$est_time)
+new_hours = str_remove(data$est_time[cond], hours)
+temp_table = read.table(text=new_hours, sep='-', header=FALSE) * 60
+means = rowMeans(temp_table, na.rm=TRUE)
+data$est_time[cond1] <- means
+
+# get mean of range
+cond3 <- grepl('^(\\d+)-(\\d+)$', data$est_time)
+data$est_time[cond3] <- rowMeans(read.table(text = data$est_time[cond3],
+     sep = '-', header = FALSE), na.rm = TRUE)
+```
+
+```{r}
+data$est_time
+```
