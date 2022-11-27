@@ -58,7 +58,7 @@ scale_and_avg_range <- function(column, to_match, scale) {
   cond = grepl(matcher, column)
   stripped_rows = str_remove_all(column[cond], to_match)
   table = read.table(text=stripped_rows, sep='-', header=FALSE) * scale
-  column[cond] <- rowMeans(temp_table, na.rm=TRUE)
+  column[cond] <- rowMeans(table, na.rm=TRUE)
   return(column)
 }
 ```
