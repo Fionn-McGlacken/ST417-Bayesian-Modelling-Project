@@ -13,6 +13,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library('stringr')
 library('dplyr')
 library('lubridate')
+library('tidyr')
+library('ggplot2')
 ```
 
 ```{r}
@@ -103,13 +105,34 @@ zeros = c('Nothing', 'None')
 for (i in zeros) {
   data$cost <- sub(i, '0', data$cost)
 }
-data$cost <- gsub('Less than a kilometre', paste(zeros, collapse='|'), data$cost)
 costs = c('cent')
 data$cost <- scale_data(data$cost, costs, 0.01)
 data[3, 10] <- 0.8
 data <- data %>% mutate(cost = as.numeric(cost))
 ```
 
+```{r}
+glimpse(data)
+```
 
+
+```{r}
+ggplot(data, aes(x=`est_time`)) + geom_histogram()
+ggplot(data, aes(x=`time`)) + geom_histogram()
+```
+
+```{r}
+ggplot(data, aes(x=`est_distance`)) + geom_histogram()
+ggplot(data, aes(x=`distance`)) + geom_histogram()
+```
+```{r}
+ggplot(data, aes(x=`est_cost`)) + geom_histogram()
+ggplot(data, aes(x=`cost`)) + geom_histogram()
+```
+
+```{r}
+ggplot(data, aes(x=`est_transport`)) + geom_bar()
+ggplot(data, aes(x=`transport`)) + geom_bar()
+```
 
 
