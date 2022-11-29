@@ -1,0 +1,73 @@
+Timestamp,How long do you think it takes students on average to travel to university (in minutes)?,How far do you think students travel on average to university (in kilometres)? ,How much money do you think students spend on average on commuting to university each day (in euros)?,What do you think is the most popular mode of transport for students commuting to college?,What year of university are you in?,How long did it take you to travel to university today (in minutes)?,What time did you begin your commute today?,How far did you travel to university today (in kilometres)?,How much money did you spend to travel to university today (in euros)?,What mode of transport did you use to travel to university today?,"What town/city and county did you travel from today? E.g. Athenry, Galway"
+2022/11/21 3:50:11 PM GMT,30,3,3,Bus / Coach,4,10,12:45,0.6,0,Walk,Eyre square
+2022/11/21 4:33:45 PM GMT,15,20,5,Bus / Coach,3,15,13:40,2,0,Walk,Galway
+2022/11/21 5:41:15 PM GMT,30,10,80 cents (leap card),Car,3,25,11:00,5,.80 cents ,Bus / Coach,Galway 
+2022/11/21 5:41:37 PM GMT,15 Minutes ,10 Km,€3,Walk,3,5 Minutes ,02:50,5 Km,None,Car,Galway
+2022/11/21 5:44:51 PM GMT,15,3,1.5,Bus / Coach,3,20,11:45,4.5,1.2,Bus / Coach,Knocknacarra 
+2022/11/21 5:56:24 PM GMT,20 mins ,10km,6,Bus / Coach,2,10,11:00,10km,2,Bus / Coach,Galway
+2022/11/21 6:02:55 PM GMT,30,4,2,Bus / Coach,4,10,12:55,1,0,Walk,"Galway, Galway "
+2022/11/21 7:12:08 PM GMT,half an hour to 40 minutes,3 or 4km,5 euro,Walk,3,25 minutes,07:35,1km,0 euro i walked,Walk,Galway (glean dara)
+2022/11/21 7:19:24 PM GMT,30,2.5,3,Walk,3,3,08:50,0.19,0,Walk,Galway
+2022/11/21 7:36:54 PM GMT,40,15,6,Bus / Coach,4,40,07:30,18,5,Bus / Coach,"Rosscahill, Galway"
+2022/11/21 7:43:03 PM GMT,20,15,4,Bus / Coach,4,20,11:00,15,0,Car,Furbo
+2022/11/21 8:34:49 PM GMT,30,15,5,Bus / Coach,4,20,10:20,13,0,Car,"Moycullen, Galway"
+2022/11/21 8:47:32 PM GMT,15,3,2,Walk,3,25,14:30,4,0,Walk,Galway
+2022/11/22 10:29:07 AM GMT,20,5,6,Walk,4,10,08:50,0.5,0,Walk,Galway
+2022/11/22 10:29:30 AM GMT,40,5,5,Bus / Coach,4,20,09:40,1.6,0,Walk,Galway
+2022/11/22 10:58:28 AM GMT,20,5km,5,Walk,4,20,11:00,1,0,Walk,Galway
+2022/11/22 11:21:45 AM GMT,40,10,5,Bus / Coach,4,80,07:50,10,0.8,Bus / Coach,"Oranmore, Galway"
+2022/11/22 12:14:15 PM GMT,30,4,2,Bus / Coach,Master's,30,09:00,5,3.6,Bus / Coach,Knocknacarra Galway
+2022/11/22 12:45:39 PM GMT,15,4,5,Bus / Coach,4,25,09:00,5,0.65,Bus / Coach,East Galway
+2022/11/22 12:59:42 PM GMT,15,3.5,3,Walk,4,6,12:30,0.5,0,Walk,"Newcastle, Galway"
+2022/11/22 2:14:23 PM GMT,20,18km,€10,Walk,4,5,10:40,1,0,Walk,Galway
+2022/11/22 3:04:31 PM GMT,30mins,05-Oct,€4-5,Bus / Coach,3,3,09:27,<1km,0,Walk,Limerick 
+2022/11/22 3:16:42 PM GMT,20,2,2.5,Walk,3,15,14:30,1.2,0,Walk,galway
+2022/11/22 3:39:22 PM GMT,20,1,€0,Walk,4,10,10:00,0.1,€0,Walk,"Newcastle, Galway "
+2022/11/22 3:41:45 PM GMT,15,3,2,Walk,4,10,10:15,2,0,Walk,Galway
+2022/11/22 3:44:42 PM GMT,40,40,7,Bus / Coach,3,30mins,08:30,15,2,Bus / Coach,Galway 
+2022/11/22 3:45:27 PM GMT,15,2,5,Walk,2,15,08:30,1.5,0,Walk,Galway
+2022/11/22 4:11:05 PM GMT,25,10,5,Bus / Coach,3,8,10:45,3,0,Bike,Salthill galway 
+2022/11/22 4:31:32 PM GMT,30,10,7,Bus / Coach,3,15,00:40,1.5,0,Bike,Galway
+2022/11/22 5:04:04 PM GMT,20,1.5,1,Walk,4,5,10:54,2.2,0,Bike,"Galway, Galway"
+2022/11/22 6:54:32 PM GMT,Depends where you live,,,Walk,3,10 minutes ,09:00,Less than a kilometre ,Nothing,Walk,Galway
+2022/11/22 7:24:08 PM GMT,30-45,5km,10,Bus / Coach,1,30,07:30,,10,Bus / Coach,Knocknacarra
+2022/11/23 12:19:31 PM GMT,30 min ,25 km,€5,Bike,3,15 minutes to arts science building,10:45,5 km,None,Bike,Galway
+2022/11/23 12:20:54 PM GMT,20,5,3,Walk,3,30,10:30,3,0.6,Bus / Coach,Rahoon
+2022/11/23 12:21:53 PM GMT,30,25,15,Car,3,15min ,10:00,5,0,Walk,Galway 
+2022/11/23 12:23:40 PM GMT,20,2km,3€,Walk,2,15min,10:45,1km,0€,Walk,Galway Headford road 
+2022/11/23 12:27:01 PM GMT,60 minutes,20,10,Car,4,40 minutes,10:00,6.3,10,Car,Knocknacarra
+2022/11/23 12:30:20 PM GMT,30 mins,3k,5,Walk,4,20,10:15,2,3,Car,Renmore
+2022/11/23 12:34:17 PM GMT,15,7,5,Car,4,20,10:30,15,0,Car,Galway
+2022/11/23 12:34:26 PM GMT,10,80,25,Walk,4,80,08:00,90,20,Car,Athlone
+2022/11/23 1:50:55 PM GMT,20,10,5,Walk,3,15,10:30,1.5,0,Walk,Galway
+2022/11/23 2:13:38 PM GMT,40,10,5,Walk,3,10,11:40,0.8,0.65,Bus / Coach,Galway city
+2022/11/23 2:14:37 PM GMT,60,20,10,Walk,3,25,12:40,3,O,Walk,Galway
+2022/11/23 2:15:18 PM GMT,60,50-100km,€10/15,Car,4,40,11:30,40km,€5,Car,Craughwell Galway 
+2022/11/23 2:16:06 PM GMT,30,5,5,Bus / Coach,3,10,13:15,1.5,0.65,Bus / Coach,Galway
+2022/11/23 2:16:12 PM GMT,49,5,4,Bus / Coach,3,4,13:45,0.1,0,Walk,Newcastle galway
+2022/11/23 2:20:49 PM GMT,50 minutes,15km,4€,Bus / Coach,4,60min,08:30,11.5km,6€,Bus / Coach,Furbo
+2022/11/23 2:22:25 PM GMT,20 minutes,3 km,€6,Walk,Higher Diploma,15minutes,08:30,1.3km,0,Walk,Galway City
+2022/11/23 2:27:09 PM GMT,90,40,10,Bus / Coach,4,60,07:00,24,5,Car,Galway 
+2022/11/23 2:28:00 PM GMT,7-10 minutes ,7km,€5-7,Bus / Coach,3,12 minutes,10:10,2.1 km ,,Car,"Bohermore, Galway "
+2022/11/23 3:04:07 PM GMT,15-20,7,5,Walk,4,35,10:30,2,2,Bus / Coach,Galway
+2022/11/23 3:08:02 PM GMT,25 minutes,2 kilometres,€5,Walk,3,1 hour 40 minutes,07:05,,97 kilometres,Train,"Athlone, Westmeath"
+2022/11/23 3:11:43 PM GMT,25,10,5,Car,4,10,09:02,3.6km,2,Car,Galway
+2022/11/23 3:14:09 PM GMT,45,35,10,Bus / Coach,4,60,08:05,35,0,Train,Athenry
+2022/11/23 3:15:43 PM GMT,60 minutes ,45,10,Bus / Coach,Higher Diploma,20,13:30,1.5,0,Walk,Galway
+2022/11/23 3:24:23 PM GMT,2-4 hours,40-100,12,Bus / Coach,3,95,08:30,35,12,Bus / Coach,Tuam
+2022/11/23 4:08:45 PM GMT,30,5,3,Walk,3,15,11:15,1.5,0,Walk,Galway
+2022/11/23 5:42:39 PM GMT,30 min,5km,5€,Bus / Coach,3,10 mins,11:00,1.3km,60cent,Bus / Coach,Galway city centre
+2022/11/23 11:31:30 PM GMT,20,8,2,Bus / Coach,4,15,08:00,4.7,2,Car,Galway
+2022/11/24 4:41:21 PM GMT,30,7,5,Bus / Coach,4,60,12:25,20,1.2,Bus / Coach,"Athenry, Galway"
+2022/11/24 5:43:15 PM GMT,20,2,1,Walk,4,5,10:50,<1,0,Walk,Galway
+2022/11/24 5:43:52 PM GMT,25,10,10,Bus / Coach,3,10,09:43,3,1.3,Bus / Coach,Rahoon Galway 
+2022/11/24 5:44:29 PM GMT,2-4hrs,60km+,€15 daily ,Bus / Coach,4,20 minutes ,09:45,3.2km,0 (though i usually get bus for 65c today was lucky!),Car,Galway city
+2022/11/24 5:45:05 PM GMT,30,20,2,Walk,2,15,10:35,4,0,Bike,Knocknacara 
+2022/11/24 5:45:41 PM GMT,45,20,10,Bus / Coach,2,25,08:30,2,4,Bus / Coach,salthill
+2022/11/24 5:49:16 PM GMT,45,4.2,6,Bus / Coach,Master's,30,10:05,4,1.3,Bus / Coach,Galway
+2022/11/24 5:50:57 PM GMT,75,45,€2,Bus / Coach,4,14,09:45,1.6,0,Walk,Galway City 
+2022/11/24 5:55:08 PM GMT,20,2,10,Walk,4,10,09:00,0.2,0,Walk,Galway
+2022/11/24 6:47:04 PM GMT,60,30,6,Walk,4,65,07:50,30,4,Train,Craughwell 
+2022/11/24 6:52:49 PM GMT,45mins,21km,€7,Walk,4,20mins,08:00,20km,2,Train,"Athenry, Galway"
+2022/11/25 5:47:15 PM GMT,60,20,4,Bus / Coach,4,50,11:00,29,8,Car,Ardrahan
+2022/11/25 8:32:59 PM GMT,20,5,10,Walk,Master's,22,10:13,1.8,0,Walk,Ballinfoile
