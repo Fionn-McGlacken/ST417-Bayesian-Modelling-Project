@@ -3,7 +3,7 @@
     "path": "C:/Users/fionn/OneDrive - National University of Ireland, Galway/4th Year/Semester 1/Bayesian Modelling/Project/ST417-Bayesian-Modelling-Project/ST417-Bayesian-Modelling-Project/ST417 Bayesian Modelling Project.Rmd",
     "project_path": "ST417-Bayesian-Modelling-Project/ST417 Bayesian Modelling Project.Rmd",
     "type": "r_markdown",
-    "hash": "3721427208",
+    "hash": "0",
     "contents": "",
     "dirty": false,
     "created": 1669730090861.0,
@@ -12,8 +12,8 @@
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "113,22",
-        "scrollLine": "89",
+        "cursorPosition": "119,0",
+        "scrollLine": "69",
         "last_setup_crc32": "3C5AFCA1360f285e"
     },
     "folds": "",
