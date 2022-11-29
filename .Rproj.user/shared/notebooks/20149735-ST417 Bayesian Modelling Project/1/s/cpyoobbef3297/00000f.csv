@@ -1,0 +1,9 @@
+"0","data <- data %>% mutate(timestamp = as.Date(timestamp))"
+"0","data <- data %>% mutate(day = weekdays(timestamp))"
+"0",""
+"0","data$est_time <- sub('to', '-', data$est_time)"
+"0","data$est_time <- sub('half an hour', '30', data$est_time)"
+"0","hours = c('hours', 'hrs')"
+"0","data$est_time <- scale_and_avg_range(data$est_time, hours, 60)"
+"2","Error in is.data.frame(x) : object 'temp_table' not found
+"

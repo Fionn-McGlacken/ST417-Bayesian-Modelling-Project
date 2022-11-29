@@ -1,0 +1,5 @@
+"0","data <- read.csv('data.csv')"
+"0",""
+"0","# est = estimated"
+"0","new_names = c('timestamp', 'est_time', 'est_distance', 'est_cost', 'est_transport', 'year_group', 'time', 'start_time', 'distance', 'cost', 'transport', 'origin')"
+"0","colnames(data) <- new_names"

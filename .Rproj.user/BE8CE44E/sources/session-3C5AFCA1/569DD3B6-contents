@@ -1,0 +1,119 @@
+---
+title: "ST417 Bayesian Modelling Project"
+author: "Fionn McGlacken 19388186"
+date: "`r Sys.Date()`"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# install.packages('dplyr')
+# install.packages('stringr')
+# install.packages('lubridate')
+library('stringr')
+library('dplyr')
+library('lubridate')
+```
+
+```{r}
+data <- read.csv('data.csv')
+
+# est = estimated
+new_names = c('timestamp', 'est_time', 'est_distance', 'est_cost', 'est_transport', 'year_group', 'time', 'start_time', 'distance', 'cost', 'transport', 'origin')
+colnames(data) <- new_names
+```
+
+```{r}
+# glimpse(data)
+```
+
+```{r}
+strip_data <- function(column) {
+  matcher = "[^0-9.-]"
+  cond <- grepl(matcher, column)
+  stripped_rows = str_remove_all(column[cond], matcher)
+  column[cond] <- stripped_rows
+  return(column)
+}
+
+scale_data <- function(column, to_match, scale) {
+  matcher = paste(to_match, collapse='|')
+  cond = grepl(matcher, column)
+  stripped_rows = str_remove_all(column[cond], "[^0-9.-]")
+  stripped_rows = as.numeric(stripped_rows)
+  column[cond] <- stripped_rows * scale
+  return(column)
+}
+
+avg_range <- function(column) {
+  matcher = '^(\\d+)-(\\d+)$'
+  cond <- grepl(matcher, column)
+  column[cond] <- rowMeans(read.table(text = column[cond],
+     sep = '-', header = FALSE), na.rm = TRUE)
+  return(column)
+}
+
+scale_and_avg_range <- function(column, to_match, scale) {
+  matcher = paste(to_match, collapse='|')
+  cond = grepl(matcher, column)
+  stripped_rows = str_remove_all(column[cond], to_match)
+  table = read.table(text=stripped_rows, sep='-', header=FALSE) * scale
+  column[cond] <- rowMeans(table, na.rm=TRUE)
+  return(column)
+}
+```
+
+```{r}
+data <- data %>% mutate(timestamp = as.Date(timestamp))
+data <- data %>% mutate(day = weekdays(timestamp))
+
+data$est_time <- sub('to', '-', data$est_time)
+data$est_time <- sub('half an hour', '30', data$est_time)
+hours = c('hours', 'hrs')
+data$est_time <- scale_and_avg_range(data$est_time, hours, 60)
+data$est_time <- strip_data(data$est_time)
+data$est_time <- avg_range(data$est_time)
+data <- data %>% mutate(est_time = as.numeric(est_time))
+
+data$est_distance <- sub('or', '-', data$est_distance)
+data$est_distance <- strip_data(data$est_distance)
+data$est_distance <- avg_range(data$est_distance)
+data <- data %>% mutate(est_distance = as.numeric(est_distance))
+
+data$est_cost <- sub('/', '-', data$est_cost)
+cents = c('cents')
+data$est_cost <- scale_data(data$est_cost, cents, 0.01)
+data$est_cost <- strip_data(data$est_cost)
+data$est_cost <- avg_range(data$est_cost)
+data <- data %>% mutate(est_cost = as.numeric(est_cost))
+
+data$time <- strip_data(data$time)
+data <- data %>% mutate(time = as.numeric(time))
+data$start_time = as.POSIXct(paste(data$timestamp, data$start_time), format='%Y-%m-%d %H:%M')
+
+# value entered in wrong column
+data[52, 9] <- data[52, 10]
+data$distance <- sub('Less than a kilometre', '1', data$distance)
+data$distance <- strip_data(data$distance)
+data <- data %>% mutate(distance = as.numeric(distance))
+
+data[52, 10] <- NA
+data[63, 10] <- '0'
+zeros = c('Nothing', 'None')
+for (i in zeros) {
+  data$cost <- sub(i, '0', data$cost)
+}
+data$cost <- gsub('Less than a kilometre', paste(zeros, collapse='|'), data$cost)
+costs = c('cent')
+data$cost <- scale_data(data$cost, costs, 0.01)
+data[3, 10] <- 0.8
+data <- data %>% mutate(cost = as.numeric(cost))
+```
+
+```{r}
+print('This is a test')
+```
+
+
+
+

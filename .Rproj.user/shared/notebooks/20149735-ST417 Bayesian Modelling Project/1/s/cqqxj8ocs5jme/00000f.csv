@@ -1,0 +1,14 @@
+"0","ggplot(data, aes(x=`est_time`)) + geom_histogram()"
+"1","[1m[33mError[39m in `f()`:[22m
+[33m![39m StatBin requires a continuous x variable: the x variable is discrete.Perhaps you want stat=""count""?
+Backtrace:
+[90m  1. [39m[1mbase[22m (local) `<fn>`(x)
+[90m  2. [39mggplot2:::print.ggplot(x)
+[90m  4. [39mggplot2:::ggplot_build.ggplot(x)
+[90m  5. [39mggplot2 (local) by_layer(function(l, d) l$compute_statistic(d, layout))
+[90m  6. [39mggplot2 (local) f(l = layers[[i]], d = data[[i]])
+[90m  7. [39ml$compute_statistic(d, layout)
+[90m  8. [39mggplot2 (local) f(..., self = self)
+[90m  9. [39mself$stat$setup_params(data, self$stat_params)
+[90m 10. [39mggplot2 (local) [1m[94mf([39m[22m...[1m[94m)[39m[22m
+"
