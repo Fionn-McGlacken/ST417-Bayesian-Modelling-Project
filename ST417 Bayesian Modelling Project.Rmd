@@ -7,19 +7,23 @@ output: github_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-# install.packages('dplyr')
-# install.packages('stringr')
-# install.packages('lubridate')
-library('stringr')
-library('dplyr')
-library('lubridate')
+# install.packages("dplyr")
+# install.packages("stringr")
+# install.packages("lubridate")
+library("stringr")
+library("dplyr")
+library("lubridate")
+library("knitr")
+library("LearnBayes")
+library("ggplot2")
+source("TeachBayes.r")
 ```
 
 ```{r}
-data <- read.csv('data.csv')
+data <- read.csv("data.csv")
 
 # est = estimated
-new_names = c('timestamp', 'est_time', 'est_distance', 'est_cost', 'est_transport', 'year_group', 'time', 'start_time', 'distance', 'cost', 'transport', 'origin')
+new_names <- c("timestamp", "est_time", "est_distance", "est_cost", "est_transport", "year_group", "time", "start_time", "distance", "cost", "transport", "origin") # nolint
 colnames(data) <- new_names
 ```
 
@@ -29,36 +33,36 @@ colnames(data) <- new_names
 
 ```{r}
 strip_data <- function(column) {
-  matcher = "[^0-9.-]"
+  matcher <- "[^0-9.-]"
   cond <- grepl(matcher, column)
-  stripped_rows = str_remove_all(column[cond], matcher)
+  stripped_rows <- str_remove_all(column[cond], matcher)
   column[cond] <- stripped_rows
   return(column)
 }
 
 scale_data <- function(column, to_match, scale) {
-  matcher = paste(to_match, collapse='|')
-  cond = grepl(matcher, column)
-  stripped_rows = str_remove_all(column[cond], "[^0-9.-]")
-  stripped_rows = as.numeric(stripped_rows)
+  matcher <- paste(to_match, collapse = "|")
+  cond <- grepl(matcher, column)
+  stripped_rows <- str_remove_all(column[cond], "[^0-9.-]")
+  stripped_rows <- as.numeric(stripped_rows)
   column[cond] <- stripped_rows * scale
   return(column)
 }
 
 avg_range <- function(column) {
-  matcher = '^(\\d+)-(\\d+)$'
+  matcher <- "^(\\d+)-(\\d+)$"
   cond <- grepl(matcher, column)
   column[cond] <- rowMeans(read.table(text = column[cond],
-     sep = '-', header = FALSE), na.rm = TRUE)
+     sep = "-", header = FALSE), na.rm = TRUE)
   return(column)
 }
 
 scale_and_avg_range <- function(column, to_match, scale) {
-  matcher = paste(to_match, collapse='|')
-  cond = grepl(matcher, column)
-  stripped_rows = str_remove_all(column[cond], to_match)
-  table = read.table(text=stripped_rows, sep='-', header=FALSE) * scale
-  column[cond] <- rowMeans(table, na.rm=TRUE)
+  matcher <- paste(to_match, collapse = "|")
+  cond <- grepl(matcher, column)
+  stripped_rows <- str_remove_all(column[cond], to_match)
+  table <- read.table(text = stripped_rows, sep = "-", header = FALSE) * scale
+  column[cond] <- rowMeans(table, na.rm = TRUE)
   return(column)
 }
 ```
@@ -67,21 +71,21 @@ scale_and_avg_range <- function(column, to_match, scale) {
 data <- data %>% mutate(timestamp = as.Date(timestamp))
 data <- data %>% mutate(day = weekdays(timestamp))
 
-data$est_time <- sub('to', '-', data$est_time)
-data$est_time <- sub('half an hour', '30', data$est_time)
-hours = c('hours', 'hrs')
+data$est_time <- sub("to", "-", data$est_time)
+data$est_time <- sub("half an hour", "30", data$est_time)
+hours <- c("hours", "hrs")
 data$est_time <- scale_and_avg_range(data$est_time, hours, 60)
 data$est_time <- strip_data(data$est_time)
 data$est_time <- avg_range(data$est_time)
 data <- data %>% mutate(est_time = as.numeric(est_time))
 
-data$est_distance <- sub('or', '-', data$est_distance)
+data$est_distance <- sub("or", "-", data$est_distance)
 data$est_distance <- strip_data(data$est_distance)
 data$est_distance <- avg_range(data$est_distance)
 data <- data %>% mutate(est_distance = as.numeric(est_distance))
 
-data$est_cost <- sub('/', '-', data$est_cost)
-cents = c('cents')
+data$est_cost <- sub("/", "-", data$est_cost)
+cents <- c("cents")
 data$est_cost <- scale_data(data$est_cost, cents, 0.01)
 data$est_cost <- strip_data(data$est_cost)
 data$est_cost <- avg_range(data$est_cost)
@@ -89,27 +93,195 @@ data <- data %>% mutate(est_cost = as.numeric(est_cost))
 
 data$time <- strip_data(data$time)
 data <- data %>% mutate(time = as.numeric(time))
-data$start_time = as.POSIXct(paste(data$timestamp, data$start_time), format='%Y-%m-%d %H:%M')
+data$start_time <- as.POSIXct(paste(data$timestamp, data$start_time)
+                                    , format = "%Y-%m-%d %H:%M")
 
 # value entered in wrong column
 data[52, 9] <- data[52, 10]
-data$distance <- sub('Less than a kilometre', '1', data$distance)
+data$distance <- sub("Less than a kilometre", "1", data$distance)
 data$distance <- strip_data(data$distance)
 data <- data %>% mutate(distance = as.numeric(distance))
 
 data[52, 10] <- NA
-data[63, 10] <- '0'
-zeros = c('Nothing', 'None')
+data[63, 10] <- "0"
+zeros <- c("Nothing", "None")
 for (i in zeros) {
-  data$cost <- sub(i, '0', data$cost)
+  data$cost <- sub(i, "0", data$cost)
 }
-data$cost <- gsub('Less than a kilometre', paste(zeros, collapse='|'), data$cost)
-costs = c('cent')
+data$cost <- gsub("Less than a kilometre", paste(zeros, collapse = "|")
+                  , data$cost)
+costs <- c("cent")
 data$cost <- scale_data(data$cost, costs, 0.01)
 data[3, 10] <- 0.8
 data <- data %>% mutate(cost = as.numeric(cost))
 ```
 
+```{r time prior}
+theta_time <- na.omit(data$est_time)
+prior_time <- dnorm(theta_time, mean = mean(theta_time), sd = sd(theta_time))
+bayes_df_time <- data.frame(theta_time, prior_time)
+bayes_df_time
+prob_plot(bayes_df_time)
+```
 
+```{r time posterier}
+xbar_time <- mean(data$time, na.rm = TRUE)
+n_time <- NROW(data$time)
+sigma_time <- sd(data$time, na.rm = TRUE)
+se_time <- sigma_time / sqrt(n_time)
+
+# likelihood calculation
+likelihood_time <- dnorm(xbar_time, mean = theta_time, sd = se_time)
+bayes_df_time <- data.frame(theta_time, prior_time, likelihood_time)
+
+# posterior calculation
+bayes_df_time$Product <- bayes_df_time$prior_time * bayes_df_time$likelihood_time # nolint
+bayes_df_time$Posterior <- bayes_df_time$Product / sum(bayes_df_time$Product)
+bayes_df_time
+
+# prior and posterior comparison
+prior_post_plot(bayes_df_time)
+```
+
+```{r distance prior}
+theta_dist <- na.omit(data$est_distance)
+prior_dist <- dnorm(theta_dist, mean = mean(theta_dist), sd = sd(theta_dist))
+bayes_df_dist <- data.frame(theta_dist, prior_dist)
+bayes_df_dist
+prob_plot(bayes_df_dist)
+```
+
+```{r distance posterior}
+xbar_dist <- mean(data$distance, na.rm = TRUE)
+n_dist <- NROW(data$distance)
+sigma_dist <- sd(data$distance, na.rm = TRUE)
+se_dist <- sigma_dist / sqrt(n_dist)
+
+# likelihood calculation
+likelihood_dist <- dnorm(xbar_dist, mean = theta_dist, sd = se_dist)
+bayes_df_dist <- data.frame(theta_dist, prior_dist, likelihood_dist)
+
+# posterior calculation
+bayes_df_dist$Product <- bayes_df_dist$prior_dist * bayes_df_dist$likelihood_dist # nolint
+bayes_df_dist$Posterior <- bayes_df_dist$Product / sum(bayes_df_dist$Product)
+bayes_df_dist
+
+# prior and posterior comparison
+prior_post_plot(bayes_df_dist)
+```
+
+```{r cost prior}
+theta_cost <- na.omit(data$est_cost)
+prior_cost <- dnorm(theta_cost, mean = mean(theta_cost), sd = sd(theta_cost))
+bayes_df_cost <- data.frame(theta_cost, prior_cost)
+bayes_df_cost
+prob_plot(bayes_df_cost)
+```
+
+```{r cost posterior}
+xbar_cost <- mean(data$cost, na.rm = TRUE)
+n_cost <- NROW(data$cost)
+sigma_cost <- sd(data$cost, na.rm = TRUE)
+se_cost <- sigma_cost / sqrt(n_cost)
+
+# likelihood calculation
+likelihood_cost <- dnorm(xbar_cost, mean = theta_cost, sd = se_cost)
+bayes_df_cost <- data.frame(theta_cost, prior_cost, likelihood_cost)
+
+# posterior calculation
+bayes_df_cost$Product <- bayes_df_cost$prior_cost * bayes_df_cost$likelihood_cost # nolint
+bayes_df_cost$Posterior <- bayes_df_cost$Product / sum(bayes_df_cost$Product)
+bayes_df_cost
+
+# prior and posterior comparison
+prior_post_plot(bayes_df_cost)
+```
+
+```{r}
+m0_time <- mean(data$est_time, na.rm = TRUE)
+m0_dist <- mean(data$est_distance, na.rm = TRUE)
+m0_cost <- mean(data$est_cost, na.rm = TRUE)
+s0_time <- sd(data$est_time, na.rm = TRUE)
+s0_dist <- sd(data$est_distance, na.rm = TRUE)
+s0_cost <- sd(data$est_cost, na.rm = TRUE)
+```
+
+```{r}
+post_mean_time <- ((1 / (se_time^2) + 1 / (s0_time^2))^(-1)) * (xbar_time / (se_time^2) + m0_time / (s0_time^2)) # nolint
+post_sd_time <- sqrt((1 / (se_time^2) + 1 / (s0_time^2))^(-1))
+
+post_mean_dist <- (1 / (se_dist^2) + 1 / (s0_dist^2))^(-1) * (xbar_dist / (se_dist^2) + m0_dist / (s0_dist^2)) # nolint
+post_sd_dist <- sqrt((1 / (se_dist^2) + 1 / (s0_dist^2))^(-1))
+
+post_mean_cost <- (1 / (se_cost^2) + 1 / (s0_cost^2))^(-1) * (xbar_cost / (se_cost^2) + m0_cost / (s0_cost^2)) # nolint
+post_sd_cost <- sqrt((1 / (se_cost^2) + 1 / (s0_cost^2))^(-1))
+```
+
+```{r 95 credible intervals}
+# 95% credible intervals
+time_sims <- rnorm(10000, mean = post_mean_time, sd = post_sd_time)
+time_point_estimate <- mean(time_sims)
+time_point_estimate
+
+time_ci95 <- quantile(time_sims, probs = c(0.025, 0.975))
+time_ci95
+normal_interval(0.95, time_ci95)
+
+dist_sims <- rnorm(10000, mean = post_mean_dist, sd = post_sd_dist)
+dist_point_estimate <- mean(dist_sims)
+dist_point_estimate
+
+dist_ci95 <- quantile(dist_sims, probs = c(0.025, 0.975))
+dist_ci95
+normal_interval(0.95, dist_ci95)
+
+cost_sims <- rnorm(10000, mean = post_mean_cost, sd = post_sd_cost)
+cost_point_estimate <- mean(cost_sims)
+cost_point_estimate
+
+cost_ci95 <- quantile(cost_sims, probs = c(0.025, 0.975))
+cost_ci95
+normal_interval(0.95, cost_ci95)
+```
+
+```{r distributions plot}
+x <- seq(-60, 80, length = 150)
+
+priorx_time <- dnorm(x, mean = mean(data$est_time, na.rm = TRUE),
+                     sd = sd(data$est_time, na.rm = TRUE))
+priorx_dist <- dnorm(x, mean = mean(data$est_distance, na.rm = TRUE),
+                     sd = sd(data$est_distance, na.rm = TRUE))
+priorx_cost <- dnorm(x, mean = mean(data$est_cost, na.rm = TRUE),
+                     sd = sd(data$est_cost, na.rm = TRUE))
+
+datax_time  <- dnorm(x, mean = mean(data$time, na.rm = TRUE), sd = se_time)
+datax_dist  <- dnorm(x, mean = mean(data$distance, na.rm = TRUE), sd = se_dist)
+datax_cost  <- dnorm(x, mean = mean(data$cost, na.rm = TRUE), sd = se_cost)
+
+postx_time <- dnorm(x, mean = post_mean_time, sd = post_sd_time)
+postx_dist <- dnorm(x, mean = post_mean_dist, sd = post_sd_dist)
+postx_cost <- dnorm(x, mean = post_mean_cost, sd = post_sd_cost)
+
+plot(x, priorx_time, type = "l", lwd = 3, xlim = c(-40, 60), ylim = c(0, 0.8),
+     col = "red4", main = "", xlab = "theta", ylab = "")
+lines(x, priorx_dist, col = "green4", lwd = 3)
+lines(x, priorx_cost, col = "orange3", lwd = 3)
+
+lines(x, datax_time, col = "black", lwd = 3)
+lines(x, datax_dist, col = "black", lwd = 3)
+lines(x, datax_cost, col = "black", lwd = 3)
+
+lines(x, postx_time, col = "red", lwd = 3)
+lines(x, postx_dist, col = "green", lwd = 3)
+lines(x, postx_cost, col = "orange", lwd = 3)
+
+
+legend("topright",
+       c("Time Prior", "Distance Prior", "Cost Prior", "Data",
+        "Time Post", "Distance Post", "Cost Post"),
+       lty = 1, lwd = 3,
+       col = c("red4", "green4", "orange3", "black", "red", "green", "orange")
+       )
+```
 
 
