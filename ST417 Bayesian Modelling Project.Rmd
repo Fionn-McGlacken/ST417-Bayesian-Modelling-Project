@@ -7,9 +7,6 @@ output: github_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-# install.packages("dplyr")
-# install.packages("stringr")
-# install.packages("lubridate")
 library("stringr")
 library("dplyr")
 library("lubridate")
@@ -22,16 +19,29 @@ source("TeachBayes.r")
 ```{r}
 data <- read.csv("data.csv")
 
-# est = estimated
-new_names <- c("timestamp", "est_time", "est_distance", "est_cost", "est_transport", "year_group", "time", "start_time", "distance", "cost", "transport", "origin") # nolint
+# est short for estimated
+new_names <- c(
+  "timestamp",
+  "est_time",
+  "est_distance",
+  "est_cost",
+  "est_transport",
+  "year_group",
+  "time",
+  "start_time",
+  "distance",
+  "cost",
+  "transport",
+  "origin")
+
 colnames(data) <- new_names
 ```
 
-```{r}
-# glimpse(data)
-```
+## Cleaning Data
+### Functions for Cleaning Data
 
 ```{r}
+# removes letters from entries
 strip_data <- function(column) {
   matcher <- "[^0-9.-]"
   cond <- grepl(matcher, column)
@@ -40,15 +50,17 @@ strip_data <- function(column) {
   return(column)
 }
 
-scale_data <- function(column, to_match, scale) {
+# removes letters and scales entries by scalar e.g. '80 cents' to '0.8' (euro)
+scale_data <- function(column, to_match, scalar) {
   matcher <- paste(to_match, collapse = "|")
   cond <- grepl(matcher, column)
   stripped_rows <- str_remove_all(column[cond], "[^0-9.-]")
   stripped_rows <- as.numeric(stripped_rows)
-  column[cond] <- stripped_rows * scale
+  column[cond] <- stripped_rows * scalar
   return(column)
 }
 
+# replaces range entries by average of range e.g. '7-10' to '8.5'
 avg_range <- function(column) {
   matcher <- "^(\\d+)-(\\d+)$"
   cond <- grepl(matcher, column)
@@ -57,15 +69,19 @@ avg_range <- function(column) {
   return(column)
 }
 
-scale_and_avg_range <- function(column, to_match, scale) {
+# replaces range entries by scaled average of range
+# e.g. '2-4hrs' to '180' (minutes)
+scale_and_avg_range <- function(column, to_match, scalar) {
   matcher <- paste(to_match, collapse = "|")
   cond <- grepl(matcher, column)
   stripped_rows <- str_remove_all(column[cond], to_match)
-  table <- read.table(text = stripped_rows, sep = "-", header = FALSE) * scale
+  table <- read.table(text = stripped_rows, sep = "-", header = FALSE) * scalar
   column[cond] <- rowMeans(table, na.rm = TRUE)
   return(column)
 }
 ```
+
+### Applying Functions to Data
 
 ```{r}
 data <- data %>% mutate(timestamp = as.Date(timestamp))
@@ -114,6 +130,9 @@ costs <- c("cent")
 data$cost <- scale_data(data$cost, costs, 0.01)
 data[3, 10] <- 0.8
 data <- data %>% mutate(cost = as.numeric(cost))
+
+# cleaned data
+write.csv(data, 'cleaned_data.csv')
 ```
 
 ```{r time prior}
