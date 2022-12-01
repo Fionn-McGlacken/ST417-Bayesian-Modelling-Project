@@ -302,5 +302,9 @@ legend("topright",
        col = c("red4", "green4", "orange3", "black", "red", "green", "orange")
        )
 ```
+```{r}
+print('hello')
+```
+
 
 
