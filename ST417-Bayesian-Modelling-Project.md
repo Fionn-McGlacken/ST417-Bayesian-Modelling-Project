@@ -1,21 +1,35 @@
 ST417 Bayesian Modelling Project
 ================
 Fionn McGlacken 19388186
-2022-11-30
+2022-12-18
 
 ``` r
 data <- read.csv("data.csv")
 
-# est = estimated
-new_names <- c("timestamp", "est_time", "est_distance", "est_cost", "est_transport", "year_group", "time", "start_time", "distance", "cost", "transport", "origin") # nolint
+# est short for estimated
+new_names <- c(
+  "timestamp",
+  "est_time",
+  "est_distance",
+  "est_cost",
+  "est_transport",
+  "year_group",
+  "time",
+  "start_time",
+  "distance",
+  "cost",
+  "transport",
+  "origin")
+
 colnames(data) <- new_names
 ```
 
-``` r
-# glimpse(data)
-```
+## Cleaning Data
+
+### Functions for Cleaning Data
 
 ``` r
+# removes letters from entries
 strip_data <- function(column) {
   matcher <- "[^0-9.-]"
   cond <- grepl(matcher, column)
@@ -24,15 +38,17 @@ strip_data <- function(column) {
   return(column)
 }
 
-scale_data <- function(column, to_match, scale) {
+# removes letters and scales entries by scalar e.g. '80 cents' to '0.8' (euro)
+scale_data <- function(column, to_match, scalar) {
   matcher <- paste(to_match, collapse = "|")
   cond <- grepl(matcher, column)
   stripped_rows <- str_remove_all(column[cond], "[^0-9.-]")
   stripped_rows <- as.numeric(stripped_rows)
-  column[cond] <- stripped_rows * scale
+  column[cond] <- stripped_rows * scalar
   return(column)
 }
 
+# replaces range entries by average of range e.g. '7-10' to '8.5'
 avg_range <- function(column) {
   matcher <- "^(\\d+)-(\\d+)$"
   cond <- grepl(matcher, column)
@@ -41,15 +57,19 @@ avg_range <- function(column) {
   return(column)
 }
 
-scale_and_avg_range <- function(column, to_match, scale) {
+# replaces range entries by scaled average of range
+# e.g. '2-4hrs' to '180' (minutes)
+scale_and_avg_range <- function(column, to_match, scalar) {
   matcher <- paste(to_match, collapse = "|")
   cond <- grepl(matcher, column)
   stripped_rows <- str_remove_all(column[cond], to_match)
-  table <- read.table(text = stripped_rows, sep = "-", header = FALSE) * scale
+  table <- read.table(text = stripped_rows, sep = "-", header = FALSE) * scalar
   column[cond] <- rowMeans(table, na.rm = TRUE)
   return(column)
 }
 ```
+
+### Applying Functions to Data
 
 ``` r
 data <- data %>% mutate(timestamp = as.Date(timestamp))
@@ -105,6 +125,11 @@ data <- data %>% mutate(cost = as.numeric(cost))
 ```
 
     ## Warning in mask$eval_all_mutate(quo): NAs introduced by coercion
+
+``` r
+# cleaned data
+write.csv(data, "cleaned_data.csv")
+```
 
 ``` r
 theta_time <- na.omit(data$est_time)
@@ -677,7 +702,7 @@ time_point_estimate <- mean(time_sims)
 time_point_estimate
 ```
 
-    ## [1] 25.22788
+    ## [1] 25.22175
 
 ``` r
 time_ci95 <- quantile(time_sims, probs = c(0.025, 0.975))
@@ -685,7 +710,7 @@ time_ci95
 ```
 
     ##     2.5%    97.5% 
-    ## 19.71557 30.74658
+    ## 19.70202 30.75898
 
 ``` r
 normal_interval(0.95, time_ci95)
@@ -699,7 +724,7 @@ dist_point_estimate <- mean(dist_sims)
 dist_point_estimate
 ```
 
-    ## [1] 9.149071
+    ## [1] 9.189396
 
 ``` r
 dist_ci95 <- quantile(dist_sims, probs = c(0.025, 0.975))
@@ -707,7 +732,7 @@ dist_ci95
 ```
 
     ##      2.5%     97.5% 
-    ##  5.294404 13.078474
+    ##  5.208868 13.170990
 
 ``` r
 normal_interval(0.95, dist_ci95)
@@ -721,21 +746,44 @@ cost_point_estimate <- mean(cost_sims)
 cost_point_estimate
 ```
 
-    ## [1] 1.703197
+    ## [1] 1.700958
 
 ``` r
 cost_ci95 <- quantile(cost_sims, probs = c(0.025, 0.975))
 cost_ci95
 ```
 
-    ##      2.5%     97.5% 
-    ## 0.9103374 2.5083773
+    ##     2.5%    97.5% 
+    ## 0.888957 2.498599
 
 ``` r
 normal_interval(0.95, cost_ci95)
 ```
 
 ![](ST417-Bayesian-Modelling-Project_files/figure-gfm/95%20credible%20intervals-3.png)<!-- -->
+
+``` r
+# # 95% credible intervals plot
+# x <- seq(from = 0, to = 100, length.out = 1000)
+
+# priorx_time <- dnorm(x, mean = mean(data$est_time, na.rm = TRUE), sd = sd(data$est_time, na.rm = TRUE)) # nolint
+# priorx_dist <- dnorm(x, mean = mean(data$est_distance, na.rm = TRUE), sd = sd(data$est_distance, na.rm = TRUE)) # nolint
+# priorx_cost <- dnorm(x, mean = mean(data$est_cost, na.rm = TRUE), sd = sd(data$est_cost, na.rm = TRUE)) # nolint
+
+# datax_time  <- dnorm(x, mean = mean(data$time, na.rm = TRUE), sd = se_time)
+# datax_dist  <- dnorm(x, mean = mean(data$distance, na.rm = TRUE), sd = se_dist)
+# datax_cost  <- dnorm(x, mean = mean(data$cost, na.rm = TRUE), sd = se_cost)
+
+# postx_time  <- dnorm(x, mean = post_mean_time, sd = post_sd_time)
+# postx_dist  <- dnorm(x, mean = post_mean_dist, sd = post_sd_dist)
+# postx_cost  <- dnorm(x, mean = post_mean_cost, sd = post_sd_cost)
+
+# plot(x, priorx_time, type = "l", col = "blue", lwd = 2, xlab = "Time (min)", ylab = "Density", main = "Prior and Posterior Distributions") # nolint
+# lines(x, datax_time, col = "red", lwd = 2)
+# lines(x, postx_time, col = "green", lwd = 2)
+
+# legend("topright", legend = c("Prior", "Data", "Posterior"), col = c("blue", "red", "green"), lwd = 2) # nolint
+```
 
 ``` r
 x <- seq(-60, 80, length = 150)
@@ -768,7 +816,6 @@ lines(x, postx_time, col = "red", lwd = 3)
 lines(x, postx_dist, col = "green", lwd = 3)
 lines(x, postx_cost, col = "orange", lwd = 3)
 
-
 legend("topright",
        c("Time Prior", "Distance Prior", "Cost Prior", "Data",
         "Time Post", "Distance Post", "Cost Post"),
@@ -778,3 +825,288 @@ legend("topright",
 ```
 
 ![](ST417-Bayesian-Modelling-Project_files/figure-gfm/distributions%20plot-1.png)<!-- -->
+
+## Bayesian Analysis with rjags
+
+``` r
+# define model
+model <- "
+model {
+  for (i in 1:N) {
+    time[i] ~ dnorm(mu_time, sigma_time)
+    distance[i] ~ dnorm(mu_dist, sigma_dist)
+    cost[i] ~ dnorm(mu_cost, sigma_cost)
+  }
+  mu_time ~ dnorm(m0_time, sigma0_time)
+  mu_dist ~ dnorm(m0_dist, sigma0_dist)
+  mu_cost ~ dnorm(m0_cost, sigma0_cost)
+  sigma_time ~ dgamma(a0_time, b0_time)
+  sigma_dist ~ dgamma(a0_dist, b0_dist)
+  sigma_cost ~ dgamma(a0_cost, b0_cost)
+}
+"
+```
+
+``` r
+# data
+data <- list(
+  N = nrow(data),
+  time = data$time,
+  distance = data$distance,
+  cost = data$cost,
+  m0_time = m0_time,
+  m0_dist = m0_dist,
+  m0_cost = m0_cost,
+  sigma0_time = 1 / (s0_time^2),
+  sigma0_dist = 1 / (s0_dist^2),
+  sigma0_cost = 1 / (s0_cost^2),
+  a0_time = 1 / (se_time^2),
+  a0_dist = 1 / (se_dist^2),
+  a0_cost = 1 / (se_cost^2),
+  b0_time = 1 / (se_time^2) * xbar_time,
+  b0_dist = 1 / (se_dist^2) * xbar_dist,
+  b0_cost = 1 / (se_cost^2) * xbar_cost
+)
+```
+
+``` r
+# compile model
+jags_model <- jags.model(
+  textConnection(model),
+  data = data,
+  inits = list(.RNG.name = "base::Wichmann-Hill", .RNG.seed = 1989)
+)
+```
+
+    ## Compiling model graph
+    ##    Resolving undeclared variables
+    ##    Allocating nodes
+    ## Graph information:
+    ##    Observed stochastic nodes: 207
+    ##    Unobserved stochastic nodes: 15
+    ##    Total graph size: 235
+    ## 
+    ## Initializing model
+
+``` r
+# burn in model
+update(jags_model, 1000)
+```
+
+``` r
+# simulate posterior
+sims <- coda.samples(
+  jags_model,
+  variable.names = c("mu_time", "mu_dist", "mu_cost",
+                     "sigma_time", "sigma_dist", "sigma_cost"),
+  n.iter = 10000
+)
+```
+
+``` r
+# plot sims
+plot(sims)
+```
+
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/sims%20plot-1.png)<!-- -->![](ST417-Bayesian-Modelling-Project_files/figure-gfm/sims%20plot-2.png)<!-- -->
+
+``` r
+# summary
+summary(sims)
+```
+
+    ## 
+    ## Iterations = 1001:11000
+    ## Thinning interval = 1 
+    ## Number of chains = 1 
+    ## Sample size per chain = 10000 
+    ## 
+    ## 1. Empirical mean and standard deviation for each variable,
+    ##    plus standard error of the mean:
+    ## 
+    ##                 Mean        SD  Naive SE Time-series SE
+    ## mu_cost     1.711712 0.4108362 4.108e-03      4.108e-03
+    ## mu_dist     9.177441 2.0488922 2.049e-02      2.049e-02
+    ## mu_time    25.222705 2.8560561 2.856e-02      2.949e-02
+    ## sigma_cost  0.094969 0.0153308 1.533e-04      1.554e-04
+    ## sigma_dist  0.003397 0.0005688 5.688e-06      5.771e-06
+    ## sigma_time  0.001763 0.0002961 2.961e-06      3.039e-06
+    ## 
+    ## 2. Quantiles for each variable:
+    ## 
+    ##                 2.5%       25%       50%       75%     97.5%
+    ## mu_cost     0.905480  1.432644  1.715283  1.989193  2.513230
+    ## mu_dist     5.111418  7.793923  9.174260 10.530034 13.236099
+    ## mu_time    19.595055 23.313983 25.193080 27.133262 30.866511
+    ## sigma_cost  0.067490  0.084089  0.094029  0.104970  0.126945
+    ## sigma_dist  0.002380  0.003005  0.003368  0.003753  0.004620
+    ## sigma_time  0.001227  0.001556  0.001748  0.001952  0.002377
+
+``` r
+# compile model
+jags_model_mc <- jags.model(
+  textConnection(model),
+  data = data,
+  n.chains = 3
+)
+```
+
+    ## Compiling model graph
+    ##    Resolving undeclared variables
+    ##    Allocating nodes
+    ## Graph information:
+    ##    Observed stochastic nodes: 207
+    ##    Unobserved stochastic nodes: 15
+    ##    Total graph size: 235
+    ## 
+    ## Initializing model
+
+``` r
+# burn in model
+update(jags_model_mc, 1000)
+```
+
+``` r
+# simulate posterior
+sims_mc <- coda.samples(
+  jags_model_mc,
+  variable.names = c("mu_time", "mu_dist", "mu_cost",
+                     "sigma_time", "sigma_dist", "sigma_cost"),
+  n.iter = 10000
+)
+```
+
+``` r
+# plot sims
+plot(sims_mc)
+```
+
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/sims_mc%20plot-1.png)<!-- -->![](ST417-Bayesian-Modelling-Project_files/figure-gfm/sims_mc%20plot-2.png)<!-- -->
+
+``` r
+# summary
+summary(sims_mc)
+```
+
+    ## 
+    ## Iterations = 1001:11000
+    ## Thinning interval = 1 
+    ## Number of chains = 3 
+    ## Sample size per chain = 10000 
+    ## 
+    ## 1. Empirical mean and standard deviation for each variable,
+    ##    plus standard error of the mean:
+    ## 
+    ##                 Mean        SD  Naive SE Time-series SE
+    ## mu_cost     1.701224 0.4112582 2.374e-03      2.338e-03
+    ## mu_dist     9.174625 2.0399177 1.178e-02      1.168e-02
+    ## mu_time    25.195420 2.8327215 1.635e-02      1.578e-02
+    ## sigma_cost  0.094955 0.0155784 8.994e-05      9.042e-05
+    ## sigma_dist  0.003408 0.0005736 3.312e-06      3.366e-06
+    ## sigma_time  0.001760 0.0002954 1.705e-06      1.709e-06
+    ## 
+    ## 2. Quantiles for each variable:
+    ## 
+    ##                 2.5%       25%       50%       75%     97.5%
+    ## mu_cost     0.900265  1.426189  1.698803  1.974825  2.516755
+    ## mu_dist     5.144719  7.816027  9.173807 10.540959 13.187189
+    ## mu_time    19.664716 23.291962 25.206493 27.080669 30.763619
+    ## sigma_cost  0.067100  0.083938  0.094159  0.104983  0.127903
+    ## sigma_dist  0.002384  0.003004  0.003375  0.003778  0.004616
+    ## sigma_time  0.001230  0.001552  0.001744  0.001952  0.002378
+
+``` r
+# gelman-rubin statistic
+gelman.diag(sims_mc)
+```
+
+    ## Potential scale reduction factors:
+    ## 
+    ##            Point est. Upper C.I.
+    ## mu_cost             1          1
+    ## mu_dist             1          1
+    ## mu_time             1          1
+    ## sigma_cost          1          1
+    ## sigma_dist          1          1
+    ## sigma_time          1          1
+    ## 
+    ## Multivariate psrf
+    ## 
+    ## 1
+
+``` r
+gelman.plot(sims_mc)
+```
+
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/sims_mc%20gelman-rubin-1.png)<!-- -->
+
+``` r
+# autocorrelation
+autocorr.plot(sims_mc[[1]])
+```
+
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/sims_mc%20autocorr-1.png)<!-- -->
+
+``` r
+chains <- data.frame(sims_mc[[1]])
+
+# 95% credible intervals
+CI_time <- quantile(chains$mu_time, probs = c(0.025, 0.975))
+CI_dist <- quantile(chains$mu_dist, probs = c(0.025, 0.975))
+CI_cost <- quantile(chains$mu_cost, probs = c(0.025, 0.975))
+CI_time
+```
+
+    ##     2.5%    97.5% 
+    ## 19.70192 30.78192
+
+``` r
+CI_dist
+```
+
+    ##      2.5%     97.5% 
+    ##  5.081659 13.239030
+
+``` r
+CI_cost
+```
+
+    ##     2.5%    97.5% 
+    ## 0.904729 2.520113
+
+``` r
+# 95% CI plots
+# time
+ggplot(chains, aes(x = mu_time)) +
+  geom_density(fill = "darkgray", alpha = 0.2) +
+  geom_vline(xintercept = CI_time, col = "red", lwd = 1) +
+  ggtitle("Time") +
+  xlab("Time (min)") +
+  ylab("Density")
+```
+
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/95%20CI%20plot-1.png)<!-- -->
+
+``` r
+# distance
+ggplot(chains, aes(x = mu_dist)) +
+  geom_density(fill = "darkgray", alpha = 0.2) +
+  geom_vline(xintercept = CI_dist, col = "red", lwd = 1) +
+  ggtitle("Distance") +
+  xlab("Distance (km)") +
+  ylab("Density")
+```
+
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/95%20CI%20plot-2.png)<!-- -->
+
+``` r
+# cost
+ggplot(chains, aes(x = mu_cost)) +
+  geom_density(fill = "darkgray", alpha = 0.2) +
+  geom_vline(xintercept = CI_cost, col = "red", lwd = 1) +
+  ggtitle("Cost") +
+  xlab("Cost (EUR)") +
+  ylab("Density")
+```
+
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/95%20CI%20plot-3.png)<!-- -->

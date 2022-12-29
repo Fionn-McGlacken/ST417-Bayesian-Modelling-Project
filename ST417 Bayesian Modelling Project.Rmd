@@ -132,7 +132,7 @@ data[3, 10] <- 0.8
 data <- data %>% mutate(cost = as.numeric(cost))
 
 # cleaned data
-write.csv(data, 'cleaned_data.csv')
+write.csv(data, "cleaned_data.csv")
 ```
 
 ```{r time prior}
@@ -263,6 +263,30 @@ cost_ci95
 normal_interval(0.95, cost_ci95)
 ```
 
+```{r 95 credible intervals plot (test)}
+# # 95% credible intervals plot
+# x <- seq(from = 0, to = 100, length.out = 1000)
+
+# priorx_time <- dnorm(x, mean = mean(data$est_time, na.rm = TRUE), sd = sd(data$est_time, na.rm = TRUE)) # nolint
+# priorx_dist <- dnorm(x, mean = mean(data$est_distance, na.rm = TRUE), sd = sd(data$est_distance, na.rm = TRUE)) # nolint
+# priorx_cost <- dnorm(x, mean = mean(data$est_cost, na.rm = TRUE), sd = sd(data$est_cost, na.rm = TRUE)) # nolint
+
+# datax_time  <- dnorm(x, mean = mean(data$time, na.rm = TRUE), sd = se_time)
+# datax_dist  <- dnorm(x, mean = mean(data$distance, na.rm = TRUE), sd = se_dist)
+# datax_cost  <- dnorm(x, mean = mean(data$cost, na.rm = TRUE), sd = se_cost)
+
+# postx_time  <- dnorm(x, mean = post_mean_time, sd = post_sd_time)
+# postx_dist  <- dnorm(x, mean = post_mean_dist, sd = post_sd_dist)
+# postx_cost  <- dnorm(x, mean = post_mean_cost, sd = post_sd_cost)
+
+# plot(x, priorx_time, type = "l", col = "blue", lwd = 2, xlab = "Time (min)", ylab = "Density", main = "Prior and Posterior Distributions") # nolint
+# lines(x, datax_time, col = "red", lwd = 2)
+# lines(x, postx_time, col = "green", lwd = 2)
+
+# legend("topright", legend = c("Prior", "Data", "Posterior"), col = c("blue", "red", "green"), lwd = 2) # nolint
+```
+
+
 ```{r distributions plot}
 x <- seq(-60, 80, length = 150)
 
@@ -294,7 +318,6 @@ lines(x, postx_time, col = "red", lwd = 3)
 lines(x, postx_dist, col = "green", lwd = 3)
 lines(x, postx_cost, col = "orange", lwd = 3)
 
-
 legend("topright",
        c("Time Prior", "Distance Prior", "Cost Prior", "Data",
         "Time Post", "Distance Post", "Cost Post"),
@@ -302,9 +325,167 @@ legend("topright",
        col = c("red4", "green4", "orange3", "black", "red", "green", "orange")
        )
 ```
-```{r}
-print('hello')
+
+
+
+
+## Bayesian Analysis with rjags
+
+```{r rjags, include=FALSE}
+library(rjags)
 ```
 
+```{r define model}
+# define model
+model <- "
+model {
+  for (i in 1:N) {
+    time[i] ~ dnorm(mu_time, sigma_time)
+    distance[i] ~ dnorm(mu_dist, sigma_dist)
+    cost[i] ~ dnorm(mu_cost, sigma_cost)
+  }
+  mu_time ~ dnorm(m0_time, sigma0_time)
+  mu_dist ~ dnorm(m0_dist, sigma0_dist)
+  mu_cost ~ dnorm(m0_cost, sigma0_cost)
+  sigma_time ~ dgamma(a0_time, b0_time)
+  sigma_dist ~ dgamma(a0_dist, b0_dist)
+  sigma_cost ~ dgamma(a0_cost, b0_cost)
+}
+"
+```
+
+```{r model data}
+# data
+data <- list(
+  N = nrow(data),
+  time = data$time,
+  distance = data$distance,
+  cost = data$cost,
+  m0_time = m0_time,
+  m0_dist = m0_dist,
+  m0_cost = m0_cost,
+  sigma0_time = 1 / (s0_time^2),
+  sigma0_dist = 1 / (s0_dist^2),
+  sigma0_cost = 1 / (s0_cost^2),
+  a0_time = 1 / (se_time^2),
+  a0_dist = 1 / (se_dist^2),
+  a0_cost = 1 / (se_cost^2),
+  b0_time = 1 / (se_time^2) * xbar_time,
+  b0_dist = 1 / (se_dist^2) * xbar_dist,
+  b0_cost = 1 / (se_cost^2) * xbar_cost
+)
+```
+
+```{r compile model}
+# compile model
+jags_model <- jags.model(
+  textConnection(model),
+  data = data,
+  inits = list(.RNG.name = "base::Wichmann-Hill", .RNG.seed = 1989)
+)
+```
+
+```{r burn in model}
+# burn in model
+update(jags_model, 1000)
+```
+
+```{r simulate model}
+# simulate posterior
+sims <- coda.samples(
+  jags_model,
+  variable.names = c("mu_time", "mu_dist", "mu_cost",
+                     "sigma_time", "sigma_dist", "sigma_cost"),
+  n.iter = 10000
+)
+```
+
+```{r sims plot}
+# plot sims
+plot(sims)
+```
+
+```{r sims summary}
+# summary
+summary(sims)
+```
+```{r compile mcmc}
+# compile model
+jags_model_mc <- jags.model(
+  textConnection(model),
+  data = data,
+  n.chains = 3
+)
+```
+```{r burn in mcmc}
+# burn in model
+update(jags_model_mc, 1000)
+```
+```{r simulate mcmc}
+# simulate posterior
+sims_mc <- coda.samples(
+  jags_model_mc,
+  variable.names = c("mu_time", "mu_dist", "mu_cost",
+                     "sigma_time", "sigma_dist", "sigma_cost"),
+  n.iter = 10000
+)
+```
+
+```{r sims_mc plot}
+# plot sims
+plot(sims_mc)
+```
+
+```{r sims_mc summary}
+# summary
+summary(sims_mc)
+```
+```{r sims_mc gelman-rubin}
+# gelman-rubin statistic
+gelman.diag(sims_mc)
+gelman.plot(sims_mc)
+```
+
+```{r sims_mc autocorr}
+# autocorrelation
+autocorr.plot(sims_mc[[1]])
+```
+
+```{r 95 CI plot}
+chains <- data.frame(sims_mc[[1]])
+
+# 95% credible intervals
+CI_time <- quantile(chains$mu_time, probs = c(0.025, 0.975))
+CI_dist <- quantile(chains$mu_dist, probs = c(0.025, 0.975))
+CI_cost <- quantile(chains$mu_cost, probs = c(0.025, 0.975))
+CI_time
+CI_dist
+CI_cost
+
+# 95% CI plots
+# time
+ggplot(chains, aes(x = mu_time)) +
+  geom_density(fill = "darkgray", alpha = 0.2) +
+  geom_vline(xintercept = CI_time, col = "red", lwd = 1) +
+  ggtitle("Time") +
+  xlab("Time (min)") +
+  ylab("Density")
+
+# distance
+ggplot(chains, aes(x = mu_dist)) +
+  geom_density(fill = "darkgray", alpha = 0.2) +
+  geom_vline(xintercept = CI_dist, col = "red", lwd = 1) +
+  ggtitle("Distance") +
+  xlab("Distance (km)") +
+  ylab("Density")
+
+# cost
+ggplot(chains, aes(x = mu_cost)) +
+  geom_density(fill = "darkgray", alpha = 0.2) +
+  geom_vline(xintercept = CI_cost, col = "red", lwd = 1) +
+  ggtitle("Cost") +
+  xlab("Cost (EUR)") +
+  ylab("Density")
+```
 
 
