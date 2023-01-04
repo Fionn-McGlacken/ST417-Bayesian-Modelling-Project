@@ -13,6 +13,7 @@ library("lubridate")
 library("knitr")
 library("LearnBayes")
 library("ggplot2")
+library("rjags")
 source("TeachBayes.r")
 ```
 
@@ -488,4 +489,10 @@ ggplot(chains, aes(x = mu_cost)) +
   ylab("Density")
 ```
 
+```{r}
+plot(time_jags)
+summary(time_jags)
+```
 
+```{r}
+```
