@@ -328,8 +328,6 @@ legend("topright",
 ```
 
 
-
-
 ## Bayesian Analysis with rjags
 
 ```{r rjags, include=FALSE}
@@ -489,10 +487,166 @@ ggplot(chains, aes(x = mu_cost)) +
   ylab("Density")
 ```
 
+## Regression
+
 ```{r}
-plot(time_jags)
-summary(time_jags)
+library('dplyr')
+new_data <- read.csv("origin_weather_data.csv")
+new_data <- replace(new_data, is.na(new_data), 0)
+# length(unique(c(new_data$est_transport, new_data$est_transport)))
 ```
 
 ```{r}
+cost_model <- "model{
+  for (i in 1:length(Y)){
+    Y[i] ~ dnorm(m[i], s^(-2))
+    m[i] <- a + b*X1[i] + c*X2[i] + d*X3[i] + e*X4[i] + f*X5[i] + g*X6[i] + s
+  }
+
+  m0_dist <- 14.76
+  s0_dist <- 17.71457
+  m0_time <- 35.3169
+  s0_time <- 29.52084
+
+  a ~ dunif(0, 100) #intercept
+  b ~ dnorm(m0_time, s0_time^(-2)) # time (min)
+  c ~ dnorm(m0_dist, s0_dist^(-2)) # distance (km)
+  d ~ dnorm(7, 2^(-2)) # temperature (degrees celcius)
+  e ~ dnorm(6, 1^(-2)) # precipitation (mm)
+  f ~ dnorm(0.75, 0.1^(-2)) # percent humidity
+  g ~ dnorm(0.5, 0.1^(-2)) # wind speed (km/h)
+  s ~ dunif(0, 100) # error
+  }"
+
+cost_model_jags <- jags.model(textConnection(cost_model),
+  data = list(Y = new_data$cost,
+    X1 = new_data$est_time,
+    X2 = new_data$est_distance,
+    X3 = new_data$temp_celcius,
+    X4 = new_data$precipitation_mm,
+    X5 = new_data$perc_humidity,
+    X6 = new_data$wind_kmh),
+  n.chains = 3)
+
+sim_cost <- update(cost_model_jags, 10000)
+
+n <- 10000
+sims_cost <- coda.samples(cost_model_jags,
+  variable.names = c("a", "b", "c", "d", "e", "f", "g", "s"),
+  n.iter = n)
+```
+
+```{r}
+summary(sims_cost)
+
+plot(sims_cost)
+
+gelman.diag(sims_cost)
+gelman.plot(sims_cost)
+
+autocorr.plot(sims_cost[[1]])
+
+```
+
+```{r}
+time_model <- "model{
+  for (i in 1:length(Y)){
+    Y[i] ~ dnorm(m[i], s^(-2))
+    m[i] <- a + b*X1[i] + c*X2[i] + d*X3[i] + e*X4[i] + f*X5[i] + g*X6[i] + s
+  }
+
+  m0_dist <- 14.76
+  s0_dist <- 17.71457
+  m0_cost <- 5.842254
+  s0_cost <- 4.030727
+
+  a ~ dunif(0, 100) #intercept
+  b ~ dnorm(m0_cost, s0_cost^(-2)) # cost (EUR)
+  c ~ dnorm(m0_dist, s0_dist^(-2)) # distance (km)
+  d ~ dnorm(7, 2^(-2)) # temperature (degrees celcius)
+  e ~ dnorm(6, 1^(-2)) # precipitation (mm)
+  f ~ dnorm(0.75, 0.1^(-2)) # percent humidity
+  g ~ dnorm(0.5, 0.1^(-2)) # wind speed (km/h)
+  s ~ dunif(0, 100) # error
+  }"
+
+time_model_jags <- jags.model(textConnection(time_model),
+  data = list(Y = new_data$cost,
+    X1 = new_data$est_cost,
+    X2 = new_data$est_distance,
+    X3 = new_data$temp_celcius,
+    X4 = new_data$precipitation_mm,
+    X5 = new_data$perc_humidity,
+    X6 = new_data$wind_kmh),
+  n.chains = 3)
+
+sim_time <- update(time_model_jags, 10000)
+
+n <- 10000
+sims_time <- coda.samples(time_model_jags,
+  variable.names = c("a", "b", "c", "d", "e", "f", "g", "s"),
+  n.iter = n)
+```
+
+```{r}
+summary(sims_time)
+
+plot(sims_time)
+
+gelman.diag(sims_time)
+gelman.plot(sims_time)
+
+autocorr.plot(sims_time[[1]])
+```
+
+```{r}
+dist_model <- "model{
+  for (i in 1:length(Y)){
+    Y[i] ~ dnorm(m[i], s^(-2))
+    m[i] <- a + b*X1[i] + c*X2[i] + d*X3[i] + e*X4[i] + f*X5[i] + g*X6[i] + s
+  }
+
+  m0_time <- 35.3169
+  s0_time <- 29.52084
+  m0_cost <- 5.842254
+  s0_cost <- 4.030727
+
+  a ~ dunif(0, 100) #intercept
+  b ~ dnorm(m0_cost, s0_cost^(-2)) # cost (EUR)
+  c ~ dnorm(m0_time, s0_time^(-2)) # time (min)
+  d ~ dnorm(7, 2^(-2)) # temperature (degrees celcius)
+  e ~ dnorm(6, 1^(-2)) # precipitation (mm)
+  f ~ dnorm(0.75, 0.1^(-2)) # percent humidity
+  g ~ dnorm(0.5, 0.1^(-2)) # wind speed (km/h)
+  s ~ dunif(0, 100) # error
+  }"
+
+dist_model_jags <- jags.model(textConnection(dist_model),
+  data = list(Y = new_data$cost,
+    X1 = new_data$est_cost,
+    X2 = new_data$est_time,
+    X3 = new_data$temp_celcius,
+    X4 = new_data$precipitation_mm,
+    X5 = new_data$perc_humidity,
+    X6 = new_data$wind_kmh),
+  n.chains = 3)
+
+sim_dist <- update(dist_model_jags, 10000)
+
+n <- 10000
+
+sims_dist <- coda.samples(dist_model_jags,
+  variable.names = c("a", "b", "c", "d", "e", "f", "g", "s"),
+  n.iter = n)
+```
+
+```{r}
+summary(sims_dist)
+
+plot(sims_dist)
+
+gelman.diag(sims_dist)
+gelman.plot(sims_dist)
+
+autocorr.plot(sims_dist[[1]])
 ```
