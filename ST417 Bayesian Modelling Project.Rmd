@@ -580,10 +580,10 @@ time_model_jags <- jags.model(textConnection(time_model),
     X6 = new_data$wind_kmh),
   n.chains = 3)
 
-sim_time <- update(cost_model_jags, 10000)
+sim_time <- update(time_model_jags, 10000)
 
 n <- 10000
-sims_time <- coda.samples(cost_model_jags,
+sims_time <- coda.samples(time_model_jags,
   variable.names = c("a", "b", "c", "d", "e", "f", "g", "s"),
   n.iter = n)
 ```
@@ -631,11 +631,11 @@ dist_model_jags <- jags.model(textConnection(dist_model),
     X6 = new_data$wind_kmh),
   n.chains = 3)
 
-sim_dist <- update(cost_model_jags, 10000)
+sim_dist <- update(dist_model_jags, 10000)
 
 n <- 10000
 
-sims_dist <- coda.samples(cost_model_jags,
+sims_dist <- coda.samples(dist_model_jags,
   variable.names = c("a", "b", "c", "d", "e", "f", "g", "s"),
   n.iter = n)
 ```
