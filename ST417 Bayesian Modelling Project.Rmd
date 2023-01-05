@@ -1,6 +1,6 @@
 ---
 title: "ST417 Bayesian Modelling Project"
-author: "Fionn McGlacken 19388186, Alex Horkan, Hugo Mead"
+author: "Fionn McGlacken 19388186, Alex Horkan 19461736, Hugo Mead 19419556"
 date: "`r Sys.Date()`"
 output: github_document
 ---
@@ -200,12 +200,28 @@ data <- read.csv("origin_weather_data.csv")
 ```
 
 ## Data Analysis
+Our data can be divided into three sections
+- Estimates (to inform priors)
+- Data (to inform likelihoods)
+- Participant data (to measure confounds)
 
-```{r}
+### Priors
+We have four estimates (est) to inform our priors
+- est_time
+- est_distance
+- est_cost
+- est_transport
 
+#### est_time
+
+```{r est_time plots}
+est_time <- na.omit(data$est_time)
+summary(est_time)
+
+par(mfrow=c(1,2))
+plot(density(est_time), main="Estimated commuting time", xlab="Time (minutes)")
+boxplot(est_time, main="Estimated commuting time", xlab="Time (minutes)")
 ```
-
-## Priors
 
 ```{r time prior}
 theta_time <- na.omit(data$est_time)
