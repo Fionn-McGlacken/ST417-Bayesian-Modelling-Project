@@ -5,6 +5,18 @@ date: "`r Sys.Date()`"
 output: github_document
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("stringr")
+library("dplyr")
+library("lubridate")
+library("knitr")
+library("LearnBayes")
+library("ggplot2")
+library("rjags")
+source("TeachBayes.r")
+```
+
 # Aim
 
 ## Research question: 
@@ -44,6 +56,7 @@ We asked students what they think the average time, cost, distance, mode of tran
 We received a total of 74 responses comprised mostly of 3rd and 4th-year students, with the remaining being made up of 1st and 2nd-year as well as postgraduate students.
 
 ### Additional Data
+We collected additional weather data online. Unfortunately, we could not find reliable traffic data.
 
 ## Limitations: Issues in Data Sampling
 There were some issues collecting data. 
@@ -51,26 +64,14 @@ There were some issues collecting data.
 Firstly, it was easiest to collect data from students we know. This means that our data is not representative of the entire student population. For example, 3rd and 4th year students are overrepresented in our study. Additionally, it may be the case that students who are most affected by the commuting crisis are not present in this study as they were not accessible. Therefore, results may be more positive than in reality. 
 ### Messy Data
 Secondly, we did not impose any constraints on how students can enter the data. This lead to a lot of messy data that needed to be cleaned. For example, one student wrote 'half an hour to 40 minutes' for commute time. To analyse this, the value must be converted to the mean of the range. 
-
-
-
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-library("stringr")
-library("dplyr")
-library("lubridate")
-library("knitr")
-library("LearnBayes")
-library("ggplot2")
-library("rjags")
-source("TeachBayes.r")
-```
+### Missing Traffic Data
+We could not find reliable traffic data online.
 
 ```{r}
 data <- read.csv("data.csv")
 
 # est short for estimated
+# naming columns
 new_names <- c(
   "timestamp",
   "est_time",
@@ -90,6 +91,7 @@ colnames(data) <- new_names
 
 ## Cleaning Data
 ### Functions for Cleaning Data
+Defining functions to clean data.
 
 ```{r}
 # removes letters from entries
@@ -132,7 +134,7 @@ scale_and_avg_range <- function(column, to_match, scalar) {
 }
 ```
 
-### Applying Functions to Data
+### Cleaning Data
 
 ```{r}
 data <- data %>% mutate(timestamp = as.Date(timestamp))
@@ -185,6 +187,10 @@ data <- data %>% mutate(cost = as.numeric(cost))
 # cleaned data
 write.csv(data, "cleaned_data.csv")
 ```
+
+
+
+## Priors
 
 ```{r time prior}
 theta_time <- na.omit(data$est_time)
