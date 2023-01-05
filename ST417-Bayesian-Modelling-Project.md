@@ -1,7 +1,7 @@
 ST417 Bayesian Modelling Project
 ================
 Fionn McGlacken 19388186
-2022-12-18
+2023-01-05
 
 ``` r
 data <- read.csv("data.csv")
@@ -702,7 +702,7 @@ time_point_estimate <- mean(time_sims)
 time_point_estimate
 ```
 
-    ## [1] 25.22175
+    ## [1] 25.15946
 
 ``` r
 time_ci95 <- quantile(time_sims, probs = c(0.025, 0.975))
@@ -710,7 +710,7 @@ time_ci95
 ```
 
     ##     2.5%    97.5% 
-    ## 19.70202 30.75898
+    ## 19.68944 30.73285
 
 ``` r
 normal_interval(0.95, time_ci95)
@@ -724,7 +724,7 @@ dist_point_estimate <- mean(dist_sims)
 dist_point_estimate
 ```
 
-    ## [1] 9.189396
+    ## [1] 9.154057
 
 ``` r
 dist_ci95 <- quantile(dist_sims, probs = c(0.025, 0.975))
@@ -732,7 +732,7 @@ dist_ci95
 ```
 
     ##      2.5%     97.5% 
-    ##  5.208868 13.170990
+    ##  5.234244 13.105129
 
 ``` r
 normal_interval(0.95, dist_ci95)
@@ -746,15 +746,15 @@ cost_point_estimate <- mean(cost_sims)
 cost_point_estimate
 ```
 
-    ## [1] 1.700958
+    ## [1] 1.703047
 
 ``` r
 cost_ci95 <- quantile(cost_sims, probs = c(0.025, 0.975))
 cost_ci95
 ```
 
-    ##     2.5%    97.5% 
-    ## 0.888957 2.498599
+    ##      2.5%     97.5% 
+    ## 0.9078246 2.4871981
 
 ``` r
 normal_interval(0.95, cost_ci95)
@@ -998,22 +998,22 @@ summary(sims_mc)
     ##    plus standard error of the mean:
     ## 
     ##                 Mean        SD  Naive SE Time-series SE
-    ## mu_cost     1.701224 0.4112582 2.374e-03      2.338e-03
-    ## mu_dist     9.174625 2.0399177 1.178e-02      1.168e-02
-    ## mu_time    25.195420 2.8327215 1.635e-02      1.578e-02
-    ## sigma_cost  0.094955 0.0155784 8.994e-05      9.042e-05
-    ## sigma_dist  0.003408 0.0005736 3.312e-06      3.366e-06
-    ## sigma_time  0.001760 0.0002954 1.705e-06      1.709e-06
+    ## mu_cost     1.704835 0.4075758 2.353e-03      2.434e-03
+    ## mu_dist     9.194207 2.0421429 1.179e-02      1.188e-02
+    ## mu_time    25.230182 2.8366884 1.638e-02      1.636e-02
+    ## sigma_cost  0.094763 0.0155994 9.006e-05      9.045e-05
+    ## sigma_dist  0.003407 0.0005726 3.306e-06      3.371e-06
+    ## sigma_time  0.001755 0.0002904 1.677e-06      1.707e-06
     ## 
     ## 2. Quantiles for each variable:
     ## 
     ##                 2.5%       25%       50%       75%     97.5%
-    ## mu_cost     0.900265  1.426189  1.698803  1.974825  2.516755
-    ## mu_dist     5.144719  7.816027  9.173807 10.540959 13.187189
-    ## mu_time    19.664716 23.291962 25.206493 27.080669 30.763619
-    ## sigma_cost  0.067100  0.083938  0.094159  0.104983  0.127903
-    ## sigma_dist  0.002384  0.003004  0.003375  0.003778  0.004616
-    ## sigma_time  0.001230  0.001552  0.001744  0.001952  0.002378
+    ## mu_cost     0.904685  1.430102  1.703895  1.977103  2.502388
+    ## mu_dist     5.208362  7.830891  9.175842 10.539685 13.292236
+    ## mu_time    19.657846 23.330605 25.233724 27.108535 30.842456
+    ## sigma_cost  0.066792  0.083808  0.093829  0.104883  0.127968
+    ## sigma_dist  0.002373  0.003007  0.003377  0.003775  0.004613
+    ## sigma_time  0.001234  0.001553  0.001739  0.001942  0.002373
 
 ``` r
 # gelman-rubin statistic
@@ -1058,21 +1058,21 @@ CI_time
 ```
 
     ##     2.5%    97.5% 
-    ## 19.70192 30.78192
+    ## 19.54819 30.79420
 
 ``` r
 CI_dist
 ```
 
     ##      2.5%     97.5% 
-    ##  5.081659 13.239030
+    ##  5.297461 13.281096
 
 ``` r
 CI_cost
 ```
 
-    ##     2.5%    97.5% 
-    ## 0.904729 2.520113
+    ##      2.5%     97.5% 
+    ## 0.8931754 2.5022894
 
 ``` r
 # 95% CI plots
@@ -1110,3 +1110,388 @@ ggplot(chains, aes(x = mu_cost)) +
 ```
 
 ![](ST417-Bayesian-Modelling-Project_files/figure-gfm/95%20CI%20plot-3.png)<!-- -->
+
+## Regression
+
+``` r
+library('dplyr')
+new_data <- read.csv("origin_weather_data.csv")
+new_data <- replace(new_data, is.na(new_data), 0)
+# length(unique(c(new_data$est_transport, new_data$est_transport)))
+```
+
+``` r
+cost_model <- "model{
+  for (i in 1:length(Y)){
+    Y[i] ~ dnorm(m[i], s^(-2))
+    m[i] <- a + b*X1[i] + c*X2[i] + d*X3[i] + e*X4[i] + f*X5[i] + g*X6[i] + s
+  }
+
+  m0_dist <- 14.76
+  s0_dist <- 17.71457
+  m0_time <- 35.3169
+  s0_time <- 29.52084
+
+  a ~ dunif(0, 100) #intercept
+  b ~ dnorm(m0_time, s0_time^(-2)) # time (min)
+  c ~ dnorm(m0_dist, s0_dist^(-2)) # distance (km)
+  d ~ dnorm(7, 2^(-2)) # temperature (degrees celcius)
+  e ~ dnorm(6, 1^(-2)) # precipitation (mm)
+  f ~ dnorm(0.75, 0.1^(-2)) # percent humidity
+  g ~ dnorm(0.5, 0.1^(-2)) # wind speed (km/h)
+  s ~ dunif(0, 100) # error
+  }"
+
+cost_model_jags <- jags.model(textConnection(cost_model),
+  data = list(Y = new_data$cost,
+    X1 = new_data$est_time,
+    X2 = new_data$est_distance,
+    X3 = new_data$temp_celcius,
+    X4 = new_data$precipitation_mm,
+    X5 = new_data$perc_humidity,
+    X6 = new_data$wind_kmh),
+  n.chains = 3)
+```
+
+    ## Compiling model graph
+    ##    Resolving undeclared variables
+    ##    Allocating nodes
+    ## Graph information:
+    ##    Observed stochastic nodes: 72
+    ##    Unobserved stochastic nodes: 8
+    ##    Total graph size: 678
+    ## 
+    ## Initializing model
+
+``` r
+sim_cost <- update(cost_model_jags, 10000)
+
+n <- 10000
+sims_cost <- coda.samples(cost_model_jags,
+  variable.names = c("a", "b", "c", "d", "e", "f", "g", "s"),
+  n.iter = n)
+```
+
+``` r
+summary(sims_cost)
+```
+
+    ## 
+    ## Iterations = 11001:21000
+    ## Thinning interval = 1 
+    ## Number of chains = 3 
+    ## Sample size per chain = 10000 
+    ## 
+    ## 1. Empirical mean and standard deviation for each variable,
+    ##    plus standard error of the mean:
+    ## 
+    ##        Mean      SD  Naive SE Time-series SE
+    ## a  1.476564 1.24780 7.204e-03      0.0509609
+    ## b -0.003931 0.01603 9.254e-05      0.0002310
+    ## c  0.093174 0.02658 1.535e-04      0.0003350
+    ## d -0.744111 0.27952 1.614e-03      0.0145516
+    ## e -0.188393 0.16761 9.677e-04      0.0064356
+    ## f  0.744401 0.09943 5.741e-04      0.0006116
+    ## g  0.074072 0.04272 2.467e-04      0.0019376
+    ## s  2.997449 0.27046 1.562e-03      0.0041250
+    ## 
+    ## 2. Quantiles for each variable:
+    ## 
+    ##        2.5%      25%       50%       75%    97.5%
+    ## a  0.048833  0.51400  1.165341  2.105458  4.56745
+    ## b -0.035123 -0.01467 -0.004025  0.006898  0.02754
+    ## c  0.041079  0.07529  0.093179  0.111102  0.14475
+    ## d -1.314753 -0.92726 -0.740186 -0.553958 -0.21280
+    ## e -0.540407 -0.29465 -0.180788 -0.076157  0.12570
+    ## f  0.547945  0.67822  0.744741  0.811125  0.93870
+    ## g -0.006594  0.04482  0.072959  0.101908  0.16142
+    ## s  2.531126  2.80561  2.976515  3.166013  3.58422
+
+``` r
+plot(sims_cost)
+```
+
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-8-2.png)<!-- -->
+
+``` r
+gelman.diag(sims_cost)
+```
+
+    ## Potential scale reduction factors:
+    ## 
+    ##   Point est. Upper C.I.
+    ## a       1.02       1.05
+    ## b       1.00       1.00
+    ## c       1.00       1.00
+    ## d       1.00       1.01
+    ## e       1.01       1.03
+    ## f       1.00       1.00
+    ## g       1.00       1.00
+    ## s       1.00       1.00
+    ## 
+    ## Multivariate psrf
+    ## 
+    ## 1.01
+
+``` r
+gelman.plot(sims_cost)
+```
+
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-8-3.png)<!-- -->
+
+``` r
+autocorr.plot(sims_cost[[1]])
+```
+
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-8-4.png)<!-- -->
+
+``` r
+time_model <- "model{
+  for (i in 1:length(Y)){
+    Y[i] ~ dnorm(m[i], s^(-2))
+    m[i] <- a + b*X1[i] + c*X2[i] + d*X3[i] + e*X4[i] + f*X5[i] + g*X6[i] + s
+  }
+
+  m0_dist <- 14.76
+  s0_dist <- 17.71457
+  m0_cost <- 5.842254
+  s0_cost <- 4.030727
+
+  a ~ dunif(0, 100) #intercept
+  b ~ dnorm(m0_cost, s0_cost^(-2)) # cost (EUR)
+  c ~ dnorm(m0_dist, s0_dist^(-2)) # distance (km)
+  d ~ dnorm(7, 2^(-2)) # temperature (degrees celcius)
+  e ~ dnorm(6, 1^(-2)) # precipitation (mm)
+  f ~ dnorm(0.75, 0.1^(-2)) # percent humidity
+  g ~ dnorm(0.5, 0.1^(-2)) # wind speed (km/h)
+  s ~ dunif(0, 100) # error
+  }"
+
+time_model_jags <- jags.model(textConnection(time_model),
+  data = list(Y = new_data$cost,
+    X1 = new_data$est_cost,
+    X2 = new_data$est_distance,
+    X3 = new_data$temp_celcius,
+    X4 = new_data$precipitation_mm,
+    X5 = new_data$perc_humidity,
+    X6 = new_data$wind_kmh),
+  n.chains = 3)
+```
+
+    ## Compiling model graph
+    ##    Resolving undeclared variables
+    ##    Allocating nodes
+    ## Graph information:
+    ##    Observed stochastic nodes: 72
+    ##    Unobserved stochastic nodes: 8
+    ##    Total graph size: 675
+    ## 
+    ## Initializing model
+
+``` r
+sim_time <- update(time_model_jags, 10000)
+
+n <- 10000
+sims_time <- coda.samples(time_model_jags,
+  variable.names = c("a", "b", "c", "d", "e", "f", "g", "s"),
+  n.iter = n)
+```
+
+``` r
+summary(sims_time)
+```
+
+    ## 
+    ## Iterations = 11001:21000
+    ## Thinning interval = 1 
+    ## Number of chains = 3 
+    ## Sample size per chain = 10000 
+    ## 
+    ## 1. Empirical mean and standard deviation for each variable,
+    ##    plus standard error of the mean:
+    ## 
+    ##       Mean      SD  Naive SE Time-series SE
+    ## a  1.10718 0.98842 0.0057066      0.0336096
+    ## b  0.27186 0.11450 0.0006611      0.0019743
+    ## c  0.04370 0.02760 0.0001593      0.0004017
+    ## d -0.74080 0.26684 0.0015406      0.0133554
+    ## e -0.23222 0.14745 0.0008513      0.0049901
+    ## f  0.74082 0.10007 0.0005778      0.0006081
+    ## g  0.06914 0.04115 0.0002376      0.0019098
+    ## s  2.83999 0.25833 0.0014915      0.0041122
+    ## 
+    ## 2. Quantiles for each variable:
+    ## 
+    ##        2.5%      25%      50%      75%    97.5%
+    ## a  0.029541  0.34158  0.82876  1.60276  3.61382
+    ## b  0.045344  0.19556  0.27161  0.34923  0.49467
+    ## c -0.010863  0.02552  0.04389  0.06214  0.09778
+    ## d -1.275823 -0.92134 -0.73171 -0.55466 -0.23206
+    ## e -0.530289 -0.33029 -0.23157 -0.13125  0.04784
+    ## f  0.544530  0.67338  0.74142  0.80820  0.93571
+    ## g -0.008494  0.04071  0.06765  0.09667  0.15242
+    ## s  2.389636  2.65768  2.82103  3.00141  3.39709
+
+``` r
+plot(sims_time)
+```
+
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-10-2.png)<!-- -->
+
+``` r
+gelman.diag(sims_time)
+```
+
+    ## Potential scale reduction factors:
+    ## 
+    ##   Point est. Upper C.I.
+    ## a          1       1.00
+    ## b          1       1.00
+    ## c          1       1.00
+    ## d          1       1.01
+    ## e          1       1.00
+    ## f          1       1.00
+    ## g          1       1.01
+    ## s          1       1.00
+    ## 
+    ## Multivariate psrf
+    ## 
+    ## 1
+
+``` r
+gelman.plot(sims_time)
+```
+
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-10-3.png)<!-- -->
+
+``` r
+autocorr.plot(sims_time[[1]])
+```
+
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-10-4.png)<!-- -->
+
+``` r
+dist_model <- "model{
+  for (i in 1:length(Y)){
+    Y[i] ~ dnorm(m[i], s^(-2))
+    m[i] <- a + b*X1[i] + c*X2[i] + d*X3[i] + e*X4[i] + f*X5[i] + g*X6[i] + s
+  }
+
+  m0_time <- 35.3169
+  s0_time <- 29.52084
+  m0_cost <- 5.842254
+  s0_cost <- 4.030727
+
+  a ~ dunif(0, 100) #intercept
+  b ~ dnorm(m0_cost, s0_cost^(-2)) # cost (EUR)
+  c ~ dnorm(m0_time, s0_time^(-2)) # time (min)
+  d ~ dnorm(7, 2^(-2)) # temperature (degrees celcius)
+  e ~ dnorm(6, 1^(-2)) # precipitation (mm)
+  f ~ dnorm(0.75, 0.1^(-2)) # percent humidity
+  g ~ dnorm(0.5, 0.1^(-2)) # wind speed (km/h)
+  s ~ dunif(0, 100) # error
+  }"
+
+dist_model_jags <- jags.model(textConnection(dist_model),
+  data = list(Y = new_data$cost,
+    X1 = new_data$est_cost,
+    X2 = new_data$est_time,
+    X3 = new_data$temp_celcius,
+    X4 = new_data$precipitation_mm,
+    X5 = new_data$perc_humidity,
+    X6 = new_data$wind_kmh),
+  n.chains = 3)
+```
+
+    ## Compiling model graph
+    ##    Resolving undeclared variables
+    ##    Allocating nodes
+    ## Graph information:
+    ##    Observed stochastic nodes: 72
+    ##    Unobserved stochastic nodes: 8
+    ##    Total graph size: 667
+    ## 
+    ## Initializing model
+
+``` r
+sim_dist <- update(dist_model_jags, 10000)
+
+n <- 10000
+
+sims_dist <- coda.samples(dist_model_jags,
+  variable.names = c("a", "b", "c", "d", "e", "f", "g", "s"),
+  n.iter = n)
+```
+
+``` r
+summary(sims_dist)
+```
+
+    ## 
+    ## Iterations = 11001:21000
+    ## Thinning interval = 1 
+    ## Number of chains = 3 
+    ## Sample size per chain = 10000 
+    ## 
+    ## 1. Empirical mean and standard deviation for each variable,
+    ##    plus standard error of the mean:
+    ## 
+    ##       Mean      SD  Naive SE Time-series SE
+    ## a  1.07685 0.98935 5.712e-03      0.0361048
+    ## b  0.36921 0.08843 5.105e-04      0.0010874
+    ## c  0.01117 0.01285 7.419e-05      0.0001471
+    ## d -0.75937 0.26931 1.555e-03      0.0135206
+    ## e -0.26185 0.14383 8.304e-04      0.0048782
+    ## f  0.74242 0.09914 5.724e-04      0.0006058
+    ## g  0.07031 0.04121 2.379e-04      0.0018620
+    ## s  2.86809 0.26001 1.501e-03      0.0041504
+    ## 
+    ## 2. Quantiles for each variable:
+    ## 
+    ##        2.5%       25%      50%      75%     97.5%
+    ## a  0.033289  0.343339  0.79500  1.51380  3.688936
+    ## b  0.194895  0.310940  0.36969  0.42795  0.542062
+    ## c -0.013616  0.002513  0.01114  0.01981  0.036436
+    ## d -1.307188 -0.937902 -0.75420 -0.57465 -0.257877
+    ## e -0.557573 -0.356250 -0.25690 -0.16339  0.005453
+    ## f  0.548909  0.675927  0.74189  0.80994  0.937169
+    ## g -0.007048  0.041438  0.06974  0.09774  0.152510
+    ## s  2.413849  2.686332  2.84720  3.02943  3.433633
+
+``` r
+plot(sims_dist)
+```
+
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-12-2.png)<!-- -->
+
+``` r
+gelman.diag(sims_dist)
+```
+
+    ## Potential scale reduction factors:
+    ## 
+    ##   Point est. Upper C.I.
+    ## a       1.01       1.03
+    ## b       1.00       1.00
+    ## c       1.00       1.00
+    ## d       1.00       1.01
+    ## e       1.01       1.02
+    ## f       1.00       1.00
+    ## g       1.00       1.01
+    ## s       1.00       1.00
+    ## 
+    ## Multivariate psrf
+    ## 
+    ## 1.01
+
+``` r
+gelman.plot(sims_dist)
+```
+
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-12-3.png)<!-- -->
+
+``` r
+autocorr.plot(sims_dist[[1]])
+```
+
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-12-4.png)<!-- -->
