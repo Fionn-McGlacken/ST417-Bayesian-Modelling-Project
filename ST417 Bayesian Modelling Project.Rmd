@@ -5,6 +5,56 @@ date: "`r Sys.Date()`"
 output: github_document
 ---
 
+# Aim
+
+## Research question: 
+What are the distributions of time, distance, and cost of travel for University of Galway students, and how do they vary with respect to confounding variables such as weather, day, time, traffic, age, city or town, and mode of transport?
+
+## Motivation: 
+We are in an accommodation crisis. Third-level students without access to accommodation near their universities commute longer hours, over greater distances, at higher costs. We want to understand this empirically.
+
+## Background Information
+The target population of our study is University of Galway students. The data used in our study was surveyed from University of Galway students. We collected data on time, distance, cost, weather, day, time, traffic, age, location and mode of transport.
+
+## List of Aims
+In order to explore the effects of the different variables associated with commuting, we have set a list of aims we wish to explore throughout the project.
+
+1.	Investigate the relationship between time, distance, and commuting costs.
+2.	Investigate the effects of confounding variables, such as weather, day, time, traffic, age, and mode of transport. 
+3.	Calculate point and interval estimates of time, distance, and cost to travel. 
+4.	Investigate if the average time, distance, and cost of travel for students have increased over previous years. 
+5.	Investigate the most expensive city or town to travel from, on average. 
+6.	Investigate prevailing weather, the most common mode of transport, and traffic patterns. 
+7.	Estimate the carbon footprint of travel for University of Galway students. 
+8.	Compare differences between year groups and see which year has the greatest travel times.
+
+# Data and Prior Description
+
+## Subjective Opinion
+In our opinion, the time, distance and commuting costs should be the easiest to analyse as they are the most straightforward variables to measure. We believe that the confounding variables will be more difficult to analyse as they are harder to measure. For example, weather and traffic data must be sourced online.
+
+## Data Sampling
+### Survey
+The data we used for the purposes of this analysis was collected via an online questionnaire which was distributed amongst University of Galway students.
+
+https://docs.google.com/forms/d/1aJ-uViRoRLn2aS7wT3EdJs-szgU1ARKo895fsDlbGL4/edit
+
+We asked students what they think the average time, cost, distance, mode of transport for students is to inform our prior distributions. Then, we asked students about the time, cost, distance and mode of transport in their travel to university to inform the likelihood distributions. We also asked students about their yeargroup and origin. 
+
+We received a total of 74 responses comprised mostly of 3rd and 4th-year students, with the remaining being made up of 1st and 2nd-year as well as postgraduate students.
+
+### Additional Data
+
+## Limitations: Issues in Data Sampling
+There were some issues collecting data. 
+### Biased Data
+Firstly, it was easiest to collect data from students we know. This means that our data is not representative of the entire student population. For example, 3rd and 4th year students are overrepresented in our study. Additionally, it may be the case that students who are most affected by the commuting crisis are not present in this study as they were not accessible. Therefore, results may be more positive than in reality. 
+### Messy Data
+Secondly, we did not impose any constraints on how students can enter the data. This lead to a lot of messy data that needed to be cleaned. For example, one student wrote 'half an hour to 40 minutes' for commute time. To analyse this, the value must be converted to the mean of the range. 
+
+
+
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library("stringr")
