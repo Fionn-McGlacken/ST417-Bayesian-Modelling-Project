@@ -197,20 +197,40 @@ Next, excel was used to clean location data and add weather data.
 
 ```{r}
 data <- read.csv("origin_weather_data.csv")
+head(data)
 ```
 
 ## Data Analysis
 Our data can be divided into three sections
-- Estimates (to inform priors)
-- Data (to inform likelihoods)
+- Estimated data (to inform priors)
+- Actual data (to inform likelihoods)
 - Participant data (to measure confounds)
 
-### Priors
 We have four estimates (est) to inform our priors
 - est_time
 - est_distance
 - est_cost
 - est_transport
+
+We have four types of actual data to inform our likelihoods
+- time
+- distance
+- cost
+- transport
+
+We have 10 types of participant data to measure confounds
+- timestamp
+- year_group
+- start_time
+- origin
+- day
+- temp_celcius
+- precipitation_mm
+- perc_humidity
+- wind_kmh
+- weather (light, moderate, heavy)
+
+### Time
 
 #### est_time
 
@@ -219,19 +239,27 @@ est_time <- na.omit(data$est_time)
 summary(est_time)
 
 par(mfrow=c(1,2))
-plot(density(est_time), main="Estimated commuting time", xlab="Time (minutes)")
-boxplot(est_time, main="Estimated commuting time", xlab="Time (minutes)")
+plot(density(est_time), main="Estimated Commute Time", xlab="Time (minutes)")
+boxplot(est_time, main="Estimated Commute Time", xlab="Time (minutes)")
 ```
+
+#### Time prior
+We will use the est_time data to inform our prior for the average commute time.
+
+From est_time, it appears the data are approximately normally distributed. Therefore, a normal prior will be used, with $mu = $ mean of est_time and $\sigma =$ 
 
 ```{r time prior}
-theta_time <- na.omit(data$est_time)
-prior_time <- dnorm(theta_time, mean = mean(theta_time), sd = sd(theta_time))
-bayes_df_time <- data.frame(theta_time, prior_time)
-bayes_df_time
-prob_plot(bayes_df_time)
+
+prior_time <- rnorm(mean(theta_time), sd(theta_time))
+par(mfrow=c(1,1))
+plot(density(prior_time), main = 'Prior for average time', xlab="Time (minutes)")
+
+# bayes_df_time <- data.frame(theta_time, prior_time)
+# bayes_df_time
+# prob_plot(bayes_df_time)
 ```
 
-```{r time posterier}
+```{r time posterior}
 xbar_time <- mean(data$time, na.rm = TRUE)
 n_time <- NROW(data$time)
 sigma_time <- sd(data$time, na.rm = TRUE)
