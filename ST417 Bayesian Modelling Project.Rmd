@@ -1,6 +1,6 @@
 ---
 title: "ST417 Bayesian Modelling Project"
-author: "Fionn McGlacken 19388186"
+author: "Fionn McGlacken 19388186, Alex Horkan, Hugo Mead"
 date: "`r Sys.Date()`"
 output: github_document
 ---
@@ -16,6 +16,11 @@ library("ggplot2")
 library("rjags")
 source("TeachBayes.r")
 ```
+
+# Introduction
+This project was completed for ST417 Introduction to Bayesian Modelling. It was developed on github
+
+https://github.com/Fionn-McGlacken/ST417-Bayesian-Modelling-Project
 
 # Aim
 
@@ -59,7 +64,7 @@ We received a total of 74 responses comprised mostly of 3rd and 4th-year student
 We collected additional weather data online. Unfortunately, we could not find reliable traffic data.
 
 ## Limitations: Issues in Data Sampling
-There were some issues collecting data. 
+There were some issues collecting data:
 ### Biased Data
 Firstly, it was easiest to collect data from students we know. This means that our data is not representative of the entire student population. For example, 3rd and 4th year students are overrepresented in our study. Additionally, it may be the case that students who are most affected by the commuting crisis are not present in this study as they were not accessible. Therefore, results may be more positive than in reality. 
 ### Messy Data
@@ -188,7 +193,17 @@ data <- data %>% mutate(cost = as.numeric(cost))
 write.csv(data, "cleaned_data.csv")
 ```
 
+Next, excel was used to clean location data and add weather data.
 
+```{r}
+data <- read.csv("origin_weather_data.csv")
+```
+
+## Data Analysis
+
+```{r}
+
+```
 
 ## Priors
 
