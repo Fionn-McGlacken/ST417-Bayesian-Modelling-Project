@@ -253,7 +253,7 @@ From est_time, it appears the data are approximately normally distributed. There
 ```{r time prior}
 mu <- mean(est_time)
 sigma <- sd(est_time)
-set.seed(1)
+
 prior_time <- rtruncnorm(71, a=0, b=Inf, mu, sigma)
 par(mfrow=c(1,2))
 plot(density(prior_time), main = 'Prior for average time', xlab="Time (minutes)")
