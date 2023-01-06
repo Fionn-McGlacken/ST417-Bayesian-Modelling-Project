@@ -52,7 +52,7 @@ In order to explore the effects of the different variables associated with commu
 8.  Compare differences between year groups and see which year has the greatest travel times.
 
 # Data and Prior Description
-test
+
 ## Subjective Opinion
 
 In our opinion, the time, distance and commuting costs should be the easiest to analyse as they are the most straightforward variables to measure. We believe that the confounding variables will be more difficult to analyse as they are harder to measure. For example, weather and traffic data must be sourced online.
@@ -691,6 +691,15 @@ This is very similar to the predictions made from the original posterior distrib
 
 ```{r}
 data <- read.csv("origin_weather_data.csv")
+data[is.na(data)] <- 0
+```
+
+#### Predicting Cost of Commute
+
+##### One hot encoded model 
+Firstly, we present a failed model featuring one hot encoded categorical variables. We could not get this model to work but include it as a point of interest.
+
+```{r}
 ohe_transport <- model.matrix(~ transport + 0, data = data)
 ohe_day <- model.matrix(~ day + 0, data = data)
 ohe_weather <- model.matrix(~ weather + 0, data = data)
@@ -699,8 +708,6 @@ model_data <- select(data, -c("transport", "day", "weather"))
 model_data <- cbind(temp_df, ohe_transport, ohe_day, ohe_weather)
 model_data[is.na(model_data)] <- 0
 ```
-
-#### Predicting Cost of Commute
 
 ```{r}
 cost_model <- "model{
@@ -766,30 +773,22 @@ var_data <- list(
 ```
 
 ```{r}
-cost_model_jags <- jags.model(textConnection(cost_model),
-  data = var_data,
-  inits = list(
-    .RNG.name = "Wichmann-Hill",
-    .RNG.seed = 12345))
+print('This code did not work')
+# cost_model_jags <- jags.model(textConnection(cost_model),
+#   data = var_data,
+#   inits = list(
+#     .RNG.name = "Wichmann-Hill",
+#     .RNG.seed = 12345))
 
-sim_cost <- update(cost_model_jags, 10000)
+# sim_cost <- update(cost_model_jags, 10000)
 
-n <- 10000
-sims_cost <- coda.samples(cost_model_jags,
-  variable.names = c("a", "b", "c", "d", "e", "f", "g", "h", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u"),
-  n.iter = n)
+# n <- 10000
+# sims_cost <- coda.samples(cost_model_jags,
+#   variable.names = c("a", "b", "c", "d", "e", "f", "g", "h", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u"),
+#   n.iter = n)
 ```
 
-```{r}
-summary(sims_cost)
-```
-
-```{r}
-for (col in names(model_data)) {
-  num_elements <- nrow(model_data[col])
-  print(paste("Column", col, "has", num_elements, "elements"))
-}
-```
+#### Regular model
 
 ```{r}
 cost_model <- "model{
@@ -815,8 +814,8 @@ cost_model <- "model{
 
 cost_model_jags <- jags.model(textConnection(cost_model),
   data = list(Y = data$cost,
-    X1 = data$est_time,
-    X2 = data$est_distance,
+    X1 = data$time,
+    X2 = data$distance,
     X3 = data$temp_celcius,
     X4 = data$precipitation_mm,
     X5 = data$perc_humidity,
@@ -831,6 +830,14 @@ sims_cost <- coda.samples(cost_model_jags,
   n.iter = n)
 ```
 
+##### Diagnostics
+
+The gelman diagnostic shows that the chains have converged nicely. However, the autocorrelation is high. This is likely due to high multicollinearity in the data.
+
+Unfortunately, we cannot conclude from these results that there is a relationship between the cost of commute and time or distance, as the 95% credible intervals for the coefficients overlap 0. This may be due to confounding variables such as mode of transportation, which would have been accounted for in the one hot encoded model. 
+
+However, we can say that the confounding variables of temperature and precipitation have a negative effect on the cost of commute. While this makes sense for rain, it makes less sense for temperature and may be due to random noise in the data.
+
 ```{r}
 summary(sims_cost)
 
@@ -842,6 +849,8 @@ gelman.plot(sims_cost)
 autocorr.plot(sims_cost[[1]])
 
 ```
+
+Additional models can be seen below, where the independent variable is swapped with one of the dependent variables: time or distance. These models also show great convergence and high autocorrelation.
 
 #### Predicting Time of Commute
 
@@ -950,3 +959,4 @@ gelman.plot(sims_dist)
 autocorr.plot(sims_dist[[1]])
 ```
 
+# Conclusion
