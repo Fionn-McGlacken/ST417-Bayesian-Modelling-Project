@@ -58,7 +58,7 @@ the project.
 
 # Data and Prior Description
 
-## Subjective Opinion
+test \## Subjective Opinion
 
 In our opinion, the time, distance and commuting costs should be the
 easiest to analyse as they are the most straightforward variables to
@@ -293,6 +293,149 @@ We have 10 types of participant data to measure confounds - timestamp -
 year_group - start_time - origin - day - temp_celcius -
 precipitation_mm - perc_humidity - wind_kmh - weather (light, moderate,
 heavy)
+
+### Data Exploration
+
+To begin our analysis, we will explore the data to get a better
+understanding of the data we are working with.
+
+Firstly we will look at the location and cost data to see which
+city/town is the most expensive to commute from.
+
+``` r
+data$cost[is.na(data$cost)] <- 0
+commute_data <- select(data, origin, cost)
+
+# Group data by origin
+commute_data_by_origin <- group_by(commute_data, origin)
+
+# Calculate summary statistics for cost by origin
+cost_summary <- summarize(commute_data_by_origin,
+                          mean_cost = mean(cost))
+
+# Reorder origins based on mean cost
+cost_summary$origin <- reorder(cost_summary$origin, cost_summary$mean_cost, decreasing = TRUE)
+
+# Sort data by mean cost
+cost_summary <- arrange(cost_summary, desc(mean_cost))
+
+head(cost_summary, 10)
+```
+
+    ## # A tibble: 10 × 2
+    ##    origin                 mean_cost
+    ##    <fct>                      <dbl>
+    ##  1 "Tuam, Galway"              12  
+    ##  2 "Athlone, Westmeath"        10  
+    ##  3 "Ardrahan, Galway"           8  
+    ##  4 "Knocknacarra, Galway"       5.3
+    ##  5 "Galway , Galway"            5  
+    ##  6 "Rosscahill, Galway"         5  
+    ##  7 "Knocknacarra Galway"        3.6
+    ##  8 "Renmore, Galway"            3  
+    ##  9 "Craughwell, Galway "        2  
+    ## 10 "Salthill, Galway "          2
+
+``` r
+# Create a bar plot showing mean cost by origin
+ggplot(head(cost_summary, 10), aes(x = origin, y = mean_cost)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Origin", y = "Mean Cost")
+```
+
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/location%20vs%20cost-1.png)<!-- -->
+
+“NA” values present in cost were changed to 0 due to the locations being
+in Galway, we can assume respondents entered “NA” instead of 0.
+
+Next, we will explore the weather, traffic and mode of transport data to
+see which ones are the most common.
+
+``` r
+# Select relevant columns
+commute_data_2 <- select(data, weather, transport)
+
+# Create contingency table
+contingency_table <- addmargins(table(commute_data_2$weather, commute_data_2$transport))
+
+# View contingency table
+contingency_table
+```
+
+    ##           
+    ##            Bike Bus / Coach Car Train Walk Sum
+    ##   Light       2           7  11     2   16  38
+    ##   Moderate    3          13   3     2   13  34
+    ##   Sum         5          20  14     4   29  72
+
+``` r
+# Create stacked bar plot showing number of observations by transport and weather
+ggplot(commute_data_2, aes(x = transport, fill = weather)) +
+  geom_bar() +
+  labs(x = "Transport", y = "Weather")
+```
+
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/weather,%20transport%20and%20traffic-1.png)<!-- -->
+
+We can see by the output and plot that the most common weather is light,
+and the most common mode of transport is Walking, with the next most
+common being Bus/Coach.
+
+Now we will now compare the differences between year groups and see
+which has the greatest travel distance, time and cost.
+
+``` r
+# Select relevant columns
+commute_data_3 <- select(na.omit(data), year_group, distance, time, cost)
+
+# View summary statistics for all variables by year group
+group_by(commute_data_3, year_group) %>%
+  summarize(mean_distance = mean(distance),
+            sd_distance = sd(distance),
+            mean_time = mean(time),
+            sd_time = sd(time),
+            mean_cost = mean(cost),
+            sd_cost = sd(cost))
+```
+
+    ## # A tibble: 5 × 7
+    ##   year_group     mean_distance sd_distance mean_time sd_time mean_cost sd_cost
+    ##   <chr>                  <dbl>       <dbl>     <dbl>   <dbl>     <dbl>   <dbl>
+    ## 1 2                       3.7        3.70       16      5.48     1.2      1.79
+    ## 2 3                       8.09      19.8        23.7   30.0      0.792    2.39
+    ## 3 4                      12.1       17.7        28.7   22.7      1.93     4.01
+    ## 4 Higher Diploma          1.4        0.141      17.5    3.54     0        0   
+    ## 5 Master's                3.6        1.64       27.3    4.62     1.63     1.82
+
+``` r
+# Create box plots showing distribution of distance, time, and cost by year group
+ggplot(commute_data_3, aes(x = year_group, y = distance)) +
+  geom_boxplot() +
+  labs(x = "Year Group", y = "Distance")
+```
+
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/year%20group%20vs%20distance,%20time%20and%20cost-1.png)<!-- -->
+
+``` r
+ggplot(commute_data_3, aes(x = year_group, y = time)) +
+  geom_boxplot() +
+  labs(x = "Year Group", y = "Time")
+```
+
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/year%20group%20vs%20distance,%20time%20and%20cost-2.png)<!-- -->
+
+``` r
+ggplot(commute_data_3, aes(x = year_group, y = cost)) +
+  geom_boxplot() +
+  labs(x = "Year Group", y = "Cost")
+```
+
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/year%20group%20vs%20distance,%20time%20and%20cost-3.png)<!-- -->
+
+As we can see from the box plots and summary statistics, the 4th year
+group has the greatest travel distance, time and cost. This is might be
+due to the fact that the 4th year group is the year group with the most
+respondents.
 
 ### Time
 
@@ -538,20 +681,20 @@ bayes_df_cost$Posterior <- bayes_df_cost$Product / sum(bayes_df_cost$Product)
 summary(bayes_df_cost)
 ```
 
-    ##    theta_cost         Prior           likelihood_cost       Product         
-    ##  Min.   : 0.000   Min.   :1.230e-06   Min.   :0.000000   Min.   :0.0000000  
-    ##  1st Qu.: 3.000   1st Qu.:5.814e-02   1st Qu.:0.000000   1st Qu.:0.0000000  
-    ##  Median : 5.000   Median :7.719e-02   Median :0.000000   Median :0.0000000  
-    ##  Mean   : 5.842   Mean   :7.545e-02   Mean   :0.092034   Mean   :0.0055712  
-    ##  3rd Qu.: 7.000   3rd Qu.:9.684e-02   3rd Qu.:0.004916   3rd Qu.:0.0003795  
-    ##  Max.   :25.000   Max.   :9.890e-02   Max.   :0.897102   Max.   :0.0497002  
+    ##    theta_cost         Prior           likelihood_cost        Product         
+    ##  Min.   : 0.000   Min.   :1.230e-06   Min.   :0.0000000   Min.   :0.000e+00  
+    ##  1st Qu.: 3.000   1st Qu.:5.814e-02   1st Qu.:0.0000000   1st Qu.:0.000e+00  
+    ##  Median : 5.000   Median :7.719e-02   Median :0.0000000   Median :0.000e+00  
+    ##  Mean   : 5.842   Mean   :7.545e-02   Mean   :0.0730226   Mean   :4.228e-03  
+    ##  3rd Qu.: 7.000   3rd Qu.:9.684e-02   3rd Qu.:0.0005512   3rd Qu.:4.255e-05  
+    ##  Max.   :25.000   Max.   :9.890e-02   Max.   :1.0141281   Max.   :5.618e-02  
     ##    Posterior        
     ##  Min.   :0.0000000  
     ##  1st Qu.:0.0000000  
     ##  Median :0.0000000  
     ##  Mean   :0.0140845  
-    ##  3rd Qu.:0.0009593  
-    ##  Max.   :0.1256456
+    ##  3rd Qu.:0.0001418  
+    ##  Max.   :0.1871731
 
 ``` r
 # prior and posterior comparison
@@ -661,7 +804,7 @@ cost_point_estimate <- mean(cost_sims)
 cost_point_estimate
 ```
 
-    ## [1] 1.707972
+    ## [1] 1.521084
 
 ``` r
 cost_ci95 <- quantile(cost_sims, probs = c(0.025, 0.975))
@@ -669,7 +812,7 @@ cost_ci95
 ```
 
     ##     2.5%    97.5% 
-    ## 0.898855 2.521152
+    ## 0.748881 2.297163
 
 ``` r
 ggplot(data.frame(cost_sims), aes(x = cost_sims)) +
@@ -760,8 +903,8 @@ jags_model_mc <- jags.model(
     ##    Resolving undeclared variables
     ##    Allocating nodes
     ## Graph information:
-    ##    Observed stochastic nodes: 207
-    ##    Unobserved stochastic nodes: 15
+    ##    Observed stochastic nodes: 215
+    ##    Unobserved stochastic nodes: 7
     ##    Total graph size: 235
     ## 
     ## Initializing model
@@ -813,22 +956,22 @@ summary(sims_mc)
     ##    plus standard error of the mean:
     ## 
     ##                 Mean        SD  Naive SE Time-series SE
-    ## mu_cost     1.704602 0.4082015 2.357e-03      2.357e-03
-    ## mu_dist     9.197053 2.0454362 1.181e-02      1.181e-02
-    ## mu_time    25.164191 2.8476808 1.644e-02      1.644e-02
-    ## sigma_cost  0.094769 0.0154579 8.925e-05      8.925e-05
-    ## sigma_dist  0.003410 0.0005740 3.314e-06      3.334e-06
-    ## sigma_time  0.001758 0.0002968 1.714e-06      1.755e-06
+    ## mu_cost     1.510163 0.3667889 2.118e-03      2.118e-03
+    ## mu_dist     9.177727 2.0573832 1.188e-02      1.181e-02
+    ## mu_time    25.191957 2.8390294 1.639e-02      1.639e-02
+    ## sigma_cost  0.103909 0.0158947 9.177e-05      9.177e-05
+    ## sigma_dist  0.003402 0.0005730 3.308e-06      3.328e-06
+    ## sigma_time  0.001763 0.0002958 1.708e-06      1.731e-06
     ## 
     ## 2. Quantiles for each variable:
     ## 
     ##                 2.5%       25%       50%       75%     97.5%
-    ## mu_cost     0.899088  1.427576  1.705809  1.978117  2.500042
-    ## mu_dist     5.174350  7.846899  9.192829 10.586733 13.200863
-    ## mu_time    19.512526 23.280386 25.178990 27.056554 30.724688
-    ## sigma_cost  0.067058  0.083896  0.093998  0.104713  0.127381
-    ## sigma_dist  0.002387  0.003009  0.003375  0.003776  0.004628
-    ## sigma_time  0.001225  0.001549  0.001742  0.001948  0.002383
+    ## mu_cost     0.788870  1.264469  1.508182  1.755664  2.234033
+    ## mu_dist     5.140697  7.796091  9.171906 10.554416 13.216504
+    ## mu_time    19.589738 23.267030 25.191355 27.098087 30.732019
+    ## sigma_cost  0.075161  0.092869  0.103079  0.114185  0.137049
+    ## sigma_dist  0.002378  0.002998  0.003370  0.003766  0.004624
+    ## sigma_time  0.001231  0.001555  0.001744  0.001954  0.002386
 
 ``` r
 # gelman-rubin statistic
@@ -888,21 +1031,21 @@ CI_time
 ```
 
     ##     2.5%    97.5% 
-    ## 19.41277 30.80398
+    ## 19.57386 30.83870
 
 ``` r
 CI_dist
 ```
 
     ##      2.5%     97.5% 
-    ##  5.208994 13.203059
+    ##  5.166344 13.284300
 
 ``` r
 CI_cost
 ```
 
-    ##     2.5%    97.5% 
-    ## 0.887578 2.512715
+    ##      2.5%     97.5% 
+    ## 0.7816886 2.2294802
 
 ``` r
 # 95% CI plots
@@ -1021,26 +1164,26 @@ summary(sims_cost)
     ##    plus standard error of the mean:
     ## 
     ##        Mean      SD  Naive SE Time-series SE
-    ## a  1.481860 1.24337 7.179e-03      0.0493431
-    ## b -0.004401 0.01610 9.298e-05      0.0002394
-    ## c  0.093806 0.02652 1.531e-04      0.0003600
-    ## d -0.733802 0.28650 1.654e-03      0.0153231
-    ## e -0.192603 0.16352 9.441e-04      0.0060253
-    ## f  0.743460 0.10033 5.792e-04      0.0006074
-    ## g  0.072706 0.04336 2.504e-04      0.0019826
-    ## s  2.994140 0.27119 1.566e-03      0.0045222
+    ## a  1.513662 1.26730 0.0073168      0.0541369
+    ## b -0.004208 0.01618 0.0000934      0.0002366
+    ## c  0.093787 0.02697 0.0001557      0.0003499
+    ## d -0.757269 0.28188 0.0016275      0.0141192
+    ## e -0.187077 0.17016 0.0009824      0.0064153
+    ## f  0.744276 0.09967 0.0005754      0.0006070
+    ## g  0.075548 0.04348 0.0002510      0.0020104
+    ## s  3.006800 0.27395 0.0015816      0.0044886
     ## 
     ## 2. Quantiles for each variable:
     ## 
     ##        2.5%      25%       50%       75%    97.5%
-    ## a  0.048344  0.50930  1.161550  2.128262  4.55757
-    ## b -0.035928 -0.01505 -0.004415  0.006189  0.02742
-    ## c  0.041177  0.07620  0.093839  0.111388  0.14584
-    ## d -1.311113 -0.92479 -0.726983 -0.534029 -0.20198
-    ## e -0.534087 -0.29604 -0.185504 -0.081788  0.11555
-    ## f  0.546261  0.67548  0.743672  0.810746  0.94050
-    ## g -0.009035  0.04317  0.071750  0.101294  0.15991
-    ## s  2.514718  2.80454  2.974630  3.163805  3.57686
+    ## a  0.049965  0.53319  1.205023  2.167026  4.73254
+    ## b -0.035871 -0.01511 -0.004111  0.006632  0.02751
+    ## c  0.040449  0.07580  0.093827  0.111776  0.14690
+    ## d -1.319847 -0.94419 -0.750723 -0.566929 -0.21181
+    ## e -0.550145 -0.29379 -0.177917 -0.070504  0.12410
+    ## f  0.548941  0.67614  0.744621  0.811398  0.94054
+    ## g -0.008721  0.04584  0.075099  0.104780  0.16128
+    ## s  2.527591  2.81374  2.985478  3.174251  3.60751
 
 ``` r
 plot(sims_cost)
@@ -1055,18 +1198,18 @@ gelman.diag(sims_cost)
     ## Potential scale reduction factors:
     ## 
     ##   Point est. Upper C.I.
-    ## a       1.00       1.01
+    ## a       1.00       1.00
     ## b       1.00       1.00
     ## c       1.00       1.00
-    ## d       1.01       1.01
-    ## e       1.00       1.01
+    ## d       1.01       1.03
+    ## e       1.01       1.01
     ## f       1.00       1.00
-    ## g       1.00       1.01
-    ## s       1.00       1.00
+    ## g       1.01       1.02
+    ## s       1.00       1.01
     ## 
     ## Multivariate psrf
     ## 
-    ## 1
+    ## 1.01
 
 ``` r
 gelman.plot(sims_cost)
@@ -1146,26 +1289,26 @@ summary(sims_time)
     ##    plus standard error of the mean:
     ## 
     ##       Mean      SD  Naive SE Time-series SE
-    ## a  1.10596 0.99362 0.0057367      0.0346754
-    ## b  0.27094 0.11270 0.0006507      0.0019022
-    ## c  0.04414 0.02713 0.0001566      0.0003878
-    ## d -0.74882 0.25634 0.0014800      0.0126530
-    ## e -0.22683 0.14363 0.0008292      0.0046241
-    ## f  0.74183 0.09947 0.0005743      0.0006091
-    ## g  0.06988 0.03902 0.0002253      0.0017517
-    ## s  2.83884 0.25747 0.0014865      0.0039526
+    ## a  1.12419 0.98085 0.0056629      0.0320372
+    ## b  0.26994 0.11396 0.0006579      0.0019365
+    ## c  0.04405 0.02745 0.0001585      0.0003893
+    ## d -0.72360 0.25686 0.0014830      0.0127031
+    ## e -0.23649 0.14671 0.0008470      0.0046649
+    ## f  0.74177 0.09937 0.0005737      0.0006068
+    ## g  0.06581 0.03942 0.0002276      0.0016929
+    ## s  2.83288 0.25788 0.0014889      0.0036929
     ## 
     ## 2. Quantiles for each variable:
     ## 
     ##        2.5%      25%      50%      75%    97.5%
-    ## a  0.033722  0.35279  0.82195  1.57866  3.65625
-    ## b  0.047848  0.19599  0.27185  0.34659  0.48981
-    ## c -0.009303  0.02595  0.04437  0.06221  0.09777
-    ## d -1.269243 -0.92531 -0.74090 -0.56571 -0.27173
-    ## e -0.518579 -0.32087 -0.22239 -0.12877  0.04266
-    ## f  0.546148  0.67444  0.74135  0.80946  0.93786
-    ## g -0.003905  0.04273  0.06856  0.09644  0.14802
-    ## s  2.387500  2.65905  2.82045  2.99940  3.39791
+    ## a  0.032143  0.35252  0.83775  1.64363  3.60691
+    ## b  0.043446  0.19462  0.27077  0.34582  0.49322
+    ## c -0.009995  0.02564  0.04419  0.06235  0.09800
+    ## d -1.246138 -0.88977 -0.71403 -0.55470 -0.22479
+    ## e -0.530611 -0.33393 -0.23214 -0.13647  0.04095
+    ## f  0.546369  0.67439  0.74201  0.80836  0.93640
+    ## g -0.010460  0.03957  0.06495  0.09182  0.14547
+    ## s  2.384680  2.65194  2.81279  2.99332  3.38235
 
 ``` r
 plot(sims_time)
@@ -1180,14 +1323,14 @@ gelman.diag(sims_time)
     ## Potential scale reduction factors:
     ## 
     ##   Point est. Upper C.I.
-    ## a       1.01       1.02
-    ## b       1.00       1.00
-    ## c       1.00       1.00
-    ## d       1.00       1.00
-    ## e       1.00       1.01
-    ## f       1.00       1.00
-    ## g       1.00       1.01
-    ## s       1.00       1.00
+    ## a          1       1.00
+    ## b          1       1.00
+    ## c          1       1.00
+    ## d          1       1.01
+    ## e          1       1.00
+    ## f          1       1.00
+    ## g          1       1.01
+    ## s          1       1.00
     ## 
     ## Multivariate psrf
     ## 
@@ -1272,26 +1415,26 @@ summary(sims_dist)
     ##    plus standard error of the mean:
     ## 
     ##       Mean      SD  Naive SE Time-series SE
-    ## a  1.08237 0.97160 5.610e-03      0.0325509
-    ## b  0.36942 0.08931 5.156e-04      0.0011154
-    ## c  0.01129 0.01300 7.504e-05      0.0001511
-    ## d -0.77091 0.28261 1.632e-03      0.0144704
-    ## e -0.25913 0.14990 8.654e-04      0.0050942
-    ## f  0.74069 0.09967 5.754e-04      0.0006074
-    ## g  0.07202 0.04286 2.474e-04      0.0020237
-    ## s  2.87296 0.25929 1.497e-03      0.0044585
+    ## a  1.10772 0.99498 0.0057445      0.0331473
+    ## b  0.36803 0.08877 0.0005125      0.0011291
+    ## c  0.01126 0.01297 0.0000749      0.0001508
+    ## d -0.74759 0.26062 0.0015047      0.0119017
+    ## e -0.26982 0.14862 0.0008580      0.0049121
+    ## f  0.74016 0.09951 0.0005745      0.0006079
+    ## g  0.06848 0.03978 0.0002297      0.0016531
+    ## s  2.86584 0.26022 0.0015024      0.0039433
     ## 
     ## 2. Quantiles for each variable:
     ## 
     ##        2.5%       25%      50%      75%    97.5%
-    ## a  0.030665  0.343461  0.81405  1.54543  3.60245
-    ## b  0.193048  0.310273  0.36982  0.42942  0.54205
-    ## c -0.014120  0.002599  0.01128  0.01992  0.03692
-    ## d -1.351581 -0.953759 -0.76586 -0.57723 -0.23769
-    ## e -0.562496 -0.357247 -0.25701 -0.15790  0.02859
-    ## f  0.544807  0.673427  0.74013  0.80854  0.93511
-    ## g -0.009817  0.042918  0.07142  0.10001  0.15905
-    ## s  2.414821  2.690188  2.85329  3.03622  3.42982
+    ## a  0.032994  0.356586  0.83128  1.57404  3.67531
+    ## b  0.192993  0.309283  0.36794  0.42770  0.54222
+    ## c -0.014007  0.002548  0.01130  0.01990  0.03682
+    ## d -1.272973 -0.918458 -0.73912 -0.57150 -0.25282
+    ## e -0.569216 -0.366360 -0.26771 -0.17040  0.01702
+    ## f  0.545459  0.673063  0.73954  0.80752  0.93406
+    ## g -0.007848  0.041967  0.06731  0.09448  0.14822
+    ## s  2.412733  2.681437  2.84491  3.02921  3.43300
 
 ``` r
 plot(sims_dist)
@@ -1306,14 +1449,14 @@ gelman.diag(sims_dist)
     ## Potential scale reduction factors:
     ## 
     ##   Point est. Upper C.I.
-    ## a          1       1.01
-    ## b          1       1.00
-    ## c          1       1.00
-    ## d          1       1.01
-    ## e          1       1.00
-    ## f          1       1.00
-    ## g          1       1.01
-    ## s          1       1.00
+    ## a       1.01       1.01
+    ## b       1.00       1.00
+    ## c       1.00       1.00
+    ## d       1.00       1.01
+    ## e       1.00       1.01
+    ## f       1.00       1.00
+    ## g       1.00       1.01
+    ## s       1.00       1.00
     ## 
     ## Multivariate psrf
     ## 

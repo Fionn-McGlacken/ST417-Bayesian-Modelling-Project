@@ -52,7 +52,7 @@ In order to explore the effects of the different variables associated with commu
 8.  Compare differences between year groups and see which year has the greatest travel times.
 
 # Data and Prior Description
-
+test
 ## Subjective Opinion
 
 In our opinion, the time, distance and commuting costs should be the easiest to analyse as they are the most straightforward variables to measure. We believe that the confounding variables will be more difficult to analyse as they are harder to measure. For example, weather and traffic data must be sourced online.
@@ -228,6 +228,90 @@ We have four estimates (est) to inform our priors - est_time - est_distance - es
 We have four types of actual data to inform our likelihoods - time - distance - cost - transport
 
 We have 10 types of participant data to measure confounds - timestamp - year_group - start_time - origin - day - temp_celcius - precipitation_mm - perc_humidity - wind_kmh - weather (light, moderate, heavy)
+
+### Data Exploration
+
+To begin our analysis, we will explore the data to get a better understanding of the data we are working with.
+
+Firstly we will look at the location and cost data to see which city/town is the most expensive to commute from.
+
+```{r location vs cost}
+data$cost[is.na(data$cost)] <- 0
+commute_data <- select(data, origin, cost)
+
+# Group data by origin
+commute_data_by_origin <- group_by(commute_data, origin)
+
+# Calculate summary statistics for cost by origin
+cost_summary <- summarize(commute_data_by_origin,
+                          mean_cost = mean(cost))
+
+# Reorder origins based on mean cost
+cost_summary$origin <- reorder(cost_summary$origin, cost_summary$mean_cost, decreasing = TRUE)
+
+# Sort data by mean cost
+cost_summary <- arrange(cost_summary, desc(mean_cost))
+
+head(cost_summary, 10)
+
+# Create a bar plot showing mean cost by origin
+ggplot(head(cost_summary, 10), aes(x = origin, y = mean_cost)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Origin", y = "Mean Cost")
+```
+
+"NA" values present in cost were changed to 0 due to the locations being in Galway, we can assume respondents entered "NA" instead of 0.
+
+Next, we will explore the weather, traffic and mode of transport data to see which ones are the most common.
+
+```{r weather, transport and traffic}
+# Select relevant columns
+commute_data_2 <- select(data, weather, transport)
+
+# Create contingency table
+contingency_table <- addmargins(table(commute_data_2$weather, commute_data_2$transport))
+
+# View contingency table
+contingency_table
+
+# Create stacked bar plot showing number of observations by transport and weather
+ggplot(commute_data_2, aes(x = transport, fill = weather)) +
+  geom_bar() +
+  labs(x = "Transport", y = "Weather")
+```
+
+We can see by the output and plot that the most common weather is light, and the most common mode of transport is Walking, with the next most common being Bus/Coach.
+
+Now we will now compare the differences between year groups and see which has the greatest travel distance, time and cost.
+
+```{r year group vs distance, time and cost}
+# Select relevant columns
+commute_data_3 <- select(na.omit(data), year_group, distance, time, cost)
+
+# View summary statistics for all variables by year group
+group_by(commute_data_3, year_group) %>%
+  summarize(mean_distance = mean(distance),
+            sd_distance = sd(distance),
+            mean_time = mean(time),
+            sd_time = sd(time),
+            mean_cost = mean(cost),
+            sd_cost = sd(cost))
+
+# Create box plots showing distribution of distance, time, and cost by year group
+ggplot(commute_data_3, aes(x = year_group, y = distance)) +
+  geom_boxplot() +
+  labs(x = "Year Group", y = "Distance")
+
+ggplot(commute_data_3, aes(x = year_group, y = time)) +
+  geom_boxplot() +
+  labs(x = "Year Group", y = "Time")
+
+ggplot(commute_data_3, aes(x = year_group, y = cost)) +
+  geom_boxplot() +
+  labs(x = "Year Group", y = "Cost")
+```
+
+As we can see from the box plots and summary statistics, the 4th year group has the greatest travel distance, time and cost. This is might be due to the fact that the 4th year group is the year group with the most respondents.
 
 ### Time
 
