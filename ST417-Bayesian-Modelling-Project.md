@@ -1,12 +1,127 @@
 ST417 Bayesian Modelling Project
 ================
-Fionn McGlacken 19388186
-2023-01-05
+Fionn McGlacken 19388186, Alex Horkan 19461736, Hugo Mead 19419556
+2023-01-06
+
+# Introduction
+
+This project was completed for ST417 Introduction to Bayesian Modelling.
+It was developed on github
+
+<https://github.com/Fionn-McGlacken/ST417-Bayesian-Modelling-Project>
+
+# Aim
+
+## Research question:
+
+What are the distributions of time, distance, and cost of travel for
+University of Galway students, and how do they vary with respect to
+confounding variables such as weather, day, time, traffic, age, city or
+town, and mode of transport?
+
+## Motivation:
+
+We are in an accommodation crisis. Third-level students without access
+to accommodation near their universities commute longer hours, over
+greater distances, at higher costs. We want to understand this
+empirically.
+
+## Background Information
+
+The target population of our study is University of Galway students. The
+data used in our study was surveyed from University of Galway students.
+We collected data on time, distance, cost, weather, day, time, traffic,
+age, location and mode of transport.
+
+## List of Aims
+
+In order to explore the effects of the different variables associated
+with commuting, we have set a list of aims we wish to explore throughout
+the project.
+
+1.  Investigate the relationship between time, distance, and commuting
+    costs.
+2.  Investigate the effects of confounding variables, such as weather,
+    day, time, traffic, age, and mode of transport.
+3.  Calculate point and interval estimates of time, distance, and cost
+    to travel.
+4.  Investigate if the average time, distance, and cost of travel for
+    students have increased over previous years.
+5.  Investigate the most expensive city or town to travel from, on
+    average.
+6.  Investigate prevailing weather, the most common mode of transport,
+    and traffic patterns.
+7.  Estimate the carbon footprint of travel for University of Galway
+    students.
+8.  Compare differences between year groups and see which year has the
+    greatest travel times.
+
+# Data and Prior Description
+
+## Subjective Opinion
+
+In our opinion, the time, distance and commuting costs should be the
+easiest to analyse as they are the most straightforward variables to
+measure. We believe that the confounding variables will be more
+difficult to analyse as they are harder to measure. For example, weather
+and traffic data must be sourced online.
+
+## Data Sampling
+
+### Survey
+
+The data we used for the purposes of this analysis was collected via an
+online questionnaire which was distributed amongst University of Galway
+students.
+
+<https://docs.google.com/forms/d/1aJ-uViRoRLn2aS7wT3EdJs-szgU1ARKo895fsDlbGL4/edit>
+
+We asked students what they think the average time, cost, distance, mode
+of transport for students is to inform our prior distributions. Then, we
+asked students about the time, cost, distance and mode of transport in
+their travel to university to inform the likelihood distributions. We
+also asked students about their yeargroup and origin.
+
+We received a total of 74 responses comprised mostly of 3rd and 4th-year
+students, with the remaining being made up of 1st and 2nd-year as well
+as postgraduate students.
+
+### Additional Data
+
+We collected additional weather data online. Unfortunately, we could not
+find reliable traffic data.
+
+## Limitations: Issues in Data Sampling
+
+There were some issues collecting data:
+
+### Biased Data
+
+Firstly, it was easiest to collect data from students we know. This
+means that our data is not representative of the entire student
+population. For example, 3rd and 4th year students are overrepresented
+in our study. Additionally, it may be the case that students who are
+most affected by the commuting crisis are not present in this study as
+they were not accessible. Therefore, results may be more positive than
+in reality.
+
+### Messy Data
+
+Secondly, we did not impose any constraints on how students can enter
+the data. This lead to a lot of messy data that needed to be cleaned.
+For example, one student wrote ‘half an hour to 40 minutes’ for commute
+time. To analyse this, the value must be converted to the mean of the
+range.
+
+### Missing Traffic Data
+
+We could not find reliable traffic data online.
 
 ``` r
 data <- read.csv("data.csv")
 
 # est short for estimated
+# naming columns
 new_names <- c(
   "timestamp",
   "est_time",
@@ -27,6 +142,8 @@ colnames(data) <- new_names
 ## Cleaning Data
 
 ### Functions for Cleaning Data
+
+Defining functions to clean data.
 
 ``` r
 # removes letters from entries
@@ -69,7 +186,7 @@ scale_and_avg_range <- function(column, to_match, scalar) {
 }
 ```
 
-### Applying Functions to Data
+### Cleaning Data
 
 ``` r
 data <- data %>% mutate(timestamp = as.Date(timestamp))
@@ -131,91 +248,123 @@ data <- data %>% mutate(cost = as.numeric(cost))
 write.csv(data, "cleaned_data.csv")
 ```
 
+Next, excel was used to clean location data and add weather data.
+
 ``` r
-theta_time <- na.omit(data$est_time)
-prior_time <- dnorm(theta_time, mean = mean(theta_time), sd = sd(theta_time))
-bayes_df_time <- data.frame(theta_time, prior_time)
-bayes_df_time
+data <- read.csv("origin_weather_data.csv")
+head(data)
 ```
 
-    ##    theta_time   prior_time
-    ## 1        30.0 1.329650e-02
-    ## 2        15.0 1.066423e-02
-    ## 3        30.0 1.329650e-02
-    ## 4        15.0 1.066423e-02
-    ## 5        15.0 1.066423e-02
-    ## 6        20.0 1.181202e-02
-    ## 7        30.0 1.329650e-02
-    ## 8        35.0 1.351314e-02
-    ## 9        30.0 1.329650e-02
-    ## 10       40.0 1.334494e-02
-    ## 11       20.0 1.181202e-02
-    ## 12       30.0 1.329650e-02
-    ## 13       15.0 1.066423e-02
-    ## 14       20.0 1.181202e-02
-    ## 15       40.0 1.334494e-02
-    ## 16       20.0 1.181202e-02
-    ## 17       40.0 1.334494e-02
-    ## 18       30.0 1.329650e-02
-    ## 19       15.0 1.066423e-02
-    ## 20       15.0 1.066423e-02
-    ## 21       20.0 1.181202e-02
-    ## 22       30.0 1.329650e-02
-    ## 23       20.0 1.181202e-02
-    ## 24       20.0 1.181202e-02
-    ## 25       15.0 1.066423e-02
-    ## 26       40.0 1.334494e-02
-    ## 27       15.0 1.066423e-02
-    ## 28       25.0 1.271335e-02
-    ## 29       30.0 1.329650e-02
-    ## 30       20.0 1.181202e-02
-    ## 31       37.5 1.347702e-02
-    ## 32       30.0 1.329650e-02
-    ## 33       20.0 1.181202e-02
-    ## 34       30.0 1.329650e-02
-    ## 35       20.0 1.181202e-02
-    ## 36       60.0 9.527364e-03
-    ## 37       30.0 1.329650e-02
-    ## 38       15.0 1.066423e-02
-    ## 39       10.0 9.355705e-03
-    ## 40       20.0 1.181202e-02
-    ## 41       40.0 1.334494e-02
-    ## 42       60.0 9.527364e-03
-    ## 43       60.0 9.527364e-03
-    ## 44       30.0 1.329650e-02
-    ## 45       49.0 1.213751e-02
-    ## 46       50.0 1.194158e-02
-    ## 47       20.0 1.181202e-02
-    ## 48       90.0 2.430531e-03
-    ## 49        8.5 8.945224e-03
-    ## 50       17.5 1.126378e-02
-    ## 51       25.0 1.271335e-02
-    ## 52       25.0 1.271335e-02
-    ## 53       45.0 1.280615e-02
-    ## 54       60.0 9.527364e-03
-    ## 55      180.0 8.219475e-08
-    ## 56       30.0 1.329650e-02
-    ## 57       30.0 1.329650e-02
-    ## 58       20.0 1.181202e-02
-    ## 59       30.0 1.329650e-02
-    ## 60       20.0 1.181202e-02
-    ## 61       25.0 1.271335e-02
-    ## 62      180.0 8.219475e-08
-    ## 63       30.0 1.329650e-02
-    ## 64       45.0 1.280615e-02
-    ## 65       45.0 1.280615e-02
-    ## 66       75.0 5.475204e-03
-    ## 67       20.0 1.181202e-02
-    ## 68       60.0 9.527364e-03
-    ## 69       45.0 1.280615e-02
-    ## 70       60.0 9.527364e-03
-    ## 71       20.0 1.181202e-02
+    ##   X  timestamp est_time est_distance est_cost est_transport year_group time
+    ## 1 1 21/11/2022       30            3      3.0   Bus / Coach          4   10
+    ## 2 2 21/11/2022       15           20      5.0   Bus / Coach          3   15
+    ## 3 3 21/11/2022       30           10      0.8           Car          3   25
+    ## 4 4 21/11/2022       15           10      3.0          Walk          3    5
+    ## 5 5 21/11/2022       15            3      1.5   Bus / Coach          3   20
+    ## 6 6 21/11/2022       20           10      6.0   Bus / Coach          2   10
+    ##         start_time distance cost   transport               origin    day
+    ## 1 21/11/2022 12:45      0.6  0.0        Walk  Eyre square, Galway Monday
+    ## 2 21/11/2022 13:40      2.0  0.0        Walk       Galway, Galway Monday
+    ## 3 21/11/2022 11:00      5.0  0.8 Bus / Coach       Galway, Galway Monday
+    ## 4 21/11/2022 02:50      5.0  0.0         Car       Galway, Galway Monday
+    ## 5 21/11/2022 11:45      4.5  1.2 Bus / Coach Knocknacarra, Galway Monday
+    ## 6 21/11/2022 11:00     10.0  2.0 Bus / Coach       Galway, Galway Monday
+    ##   temp_celcius precipitation_mm perc_humidity wind_kmh  weather
+    ## 1            9                7          0.76     36.0    Light
+    ## 2            9                7          0.72     36.0    Light
+    ## 3            8                7          0.76     36.0 Moderate
+    ## 4            9                7          0.72     36.0    Light
+    ## 5            8                7          0.76     50.4 Moderate
+    ## 6            9                7          0.76     50.4 Moderate
+
+## Data Analysis
+
+Our data can be divided into three sections - Estimated data (to inform
+priors) - Actual data (to inform likelihoods) - Participant data (to
+measure confounds)
+
+We have four estimates (est) to inform our priors - est_time -
+est_distance - est_cost - est_transport
+
+We have four types of actual data to inform our likelihoods - time -
+distance - cost - transport
+
+We have 10 types of participant data to measure confounds - timestamp -
+year_group - start_time - origin - day - temp_celcius -
+precipitation_mm - perc_humidity - wind_kmh - weather (light, moderate,
+heavy)
+
+### Time
+
+#### est_time
+
+est_time is the estimated average commute time.
+
+``` r
+est_time <- na.omit(data$est_time)
+summary(est_time)
+```
+
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    ##    8.50   20.00   30.00   35.32   40.00  180.00
+
+``` r
+par(mfrow = c(1, 2))
+plot(density(est_time), main = "Estimated Commute Time", xlab = "Time (minutes)") # nolint
+boxplot(est_time, main = "Estimated Commute Time", xlab = "Time (minutes)")
+```
+
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/est_time%20plots-1.png)<!-- -->
+
+The density and box plots of the prior data show that the opinion of our
+respondents ranges wildly, with the majority of respondents estimating a
+commute time of less than 50 minutes for the average University of
+Galway student. This estimated range of possible commute times provides
+us with a good staring point, from which we can use our actual data to
+more precisely approximate the average commute time.
+
+#### Time prior
+
+We will use the est_time data to inform our prior for the average
+commute time.
+
+From est_time, it appears the data are approximately normally
+distributed. Therefore, a normal prior will be used, with $\mu =$ mean
+of est_time, $\sigma =$ standard deviation of est_time.
+
+``` r
+# mu <- mean(est_time)
+# sigma <- sd(est_time)
+# set.seed(1)
+# Prior <- rtruncnorm(71, a=0, b=Inf, mu, sigma)
+# par(mfrow=c(1,2))
+# plot(density(Prior), main = 'Prior for average time', xlab="Time (minutes)")
+# boxplot(Prior, main="Estimated Commute Time", xlab="Time (minutes)")
+
+theta_time <- est_time
+Prior <- dnorm(theta_time, mean = mean(theta_time), sd = sd(theta_time)) # nolint
+bayes_df_time <- data.frame(theta_time, Prior)
+summary(bayes_df_time)
+```
+
+    ##    theta_time         Prior          
+    ##  Min.   :  8.50   Min.   :8.200e-08  
+    ##  1st Qu.: 20.00   1st Qu.:1.066e-02  
+    ##  Median : 30.00   Median :1.181e-02  
+    ##  Mean   : 35.32   Mean   :1.144e-02  
+    ##  3rd Qu.: 40.00   3rd Qu.:1.330e-02  
+    ##  Max.   :180.00   Max.   :1.351e-02
 
 ``` r
 prob_plot(bayes_df_time)
 ```
 
 ![](ST417-Bayesian-Modelling-Project_files/figure-gfm/time%20prior-1.png)<!-- -->
+
+#### Time posterior
+
+We will now update the prior distribution with the likelihood of the
+data to get a posterior distribution.
 
 ``` r
 xbar_time <- mean(data$time, na.rm = TRUE)
@@ -224,179 +373,77 @@ sigma_time <- sd(data$time, na.rm = TRUE)
 se_time <- sigma_time / sqrt(n_time)
 
 # likelihood calculation
-likelihood_time <- dnorm(xbar_time, mean = theta_time, sd = se_time)
-bayes_df_time <- data.frame(theta_time, prior_time, likelihood_time)
+likelihood_time <- dnorm(xbar_time, mean = est_time, sd = se_time)
+bayes_df_time <- data.frame(est_time, Prior, likelihood_time)
 
 # posterior calculation
-bayes_df_time$Product <- bayes_df_time$prior_time * bayes_df_time$likelihood_time # nolint
+bayes_df_time$Product <- bayes_df_time$Prior * bayes_df_time$likelihood_time # nolint
 bayes_df_time$Posterior <- bayes_df_time$Product / sum(bayes_df_time$Product)
-bayes_df_time
+summary(bayes_df_time)
 ```
 
-    ##    theta_time   prior_time likelihood_time       Product     Posterior
-    ## 1        30.0 1.329650e-02    3.111704e-02  4.137478e-04  2.167277e-02
-    ## 2        15.0 1.066423e-02    2.286116e-04  2.437967e-06  1.277046e-04
-    ## 3        30.0 1.329650e-02    3.111704e-02  4.137478e-04  2.167277e-02
-    ## 4        15.0 1.066423e-02    2.286116e-04  2.437967e-06  1.277046e-04
-    ## 5        15.0 1.066423e-02    2.286116e-04  2.437967e-06  1.277046e-04
-    ## 6        20.0 1.181202e-02    2.752618e-02  3.251396e-04  1.703133e-02
-    ## 7        30.0 1.329650e-02    3.111704e-02  4.137478e-04  2.167277e-02
-    ## 8        35.0 1.351314e-02    2.921481e-04  3.947838e-06  2.067941e-04
-    ## 9        30.0 1.329650e-02    3.111704e-02  4.137478e-04  2.167277e-02
-    ## 10       40.0 1.334494e-02    1.171818e-07  1.563784e-09  8.191353e-08
-    ## 11       20.0 1.181202e-02    2.752618e-02  3.251396e-04  1.703133e-02
-    ## 12       30.0 1.329650e-02    3.111704e-02  4.137478e-04  2.167277e-02
-    ## 13       15.0 1.066423e-02    2.286116e-04  2.437967e-06  1.277046e-04
-    ## 14       20.0 1.181202e-02    2.752618e-02  3.251396e-04  1.703133e-02
-    ## 15       40.0 1.334494e-02    1.171818e-07  1.563784e-09  8.191353e-08
-    ## 16       20.0 1.181202e-02    2.752618e-02  3.251396e-04  1.703133e-02
-    ## 17       40.0 1.334494e-02    1.171818e-07  1.563784e-09  8.191353e-08
-    ## 18       30.0 1.329650e-02    3.111704e-02  4.137478e-04  2.167277e-02
-    ## 19       15.0 1.066423e-02    2.286116e-04  2.437967e-06  1.277046e-04
-    ## 20       15.0 1.066423e-02    2.286116e-04  2.437967e-06  1.277046e-04
-    ## 21       20.0 1.181202e-02    2.752618e-02  3.251396e-04  1.703133e-02
-    ## 22       30.0 1.329650e-02    3.111704e-02  4.137478e-04  2.167277e-02
-    ## 23       20.0 1.181202e-02    2.752618e-02  3.251396e-04  1.703133e-02
-    ## 24       20.0 1.181202e-02    2.752618e-02  3.251396e-04  1.703133e-02
-    ## 25       15.0 1.066423e-02    2.286116e-04  2.437967e-06  1.277046e-04
-    ## 26       40.0 1.334494e-02    1.171818e-07  1.563784e-09  8.191353e-08
-    ## 27       15.0 1.066423e-02    2.286116e-04  2.437967e-06  1.277046e-04
-    ## 28       25.0 1.271335e-02    1.415943e-01  1.800138e-03  9.429412e-02
-    ## 29       30.0 1.329650e-02    3.111704e-02  4.137478e-04  2.167277e-02
-    ## 30       20.0 1.181202e-02    2.752618e-02  3.251396e-04  1.703133e-02
-    ## 31       37.5 1.347702e-02    8.677610e-06  1.169483e-07  6.125939e-06
-    ## 32       30.0 1.329650e-02    3.111704e-02  4.137478e-04  2.167277e-02
-    ## 33       20.0 1.181202e-02    2.752618e-02  3.251396e-04  1.703133e-02
-    ## 34       30.0 1.329650e-02    3.111704e-02  4.137478e-04  2.167277e-02
-    ## 35       20.0 1.181202e-02    2.752618e-02  3.251396e-04  1.703133e-02
-    ## 36       60.0 9.527364e-03    6.143457e-35  5.853096e-37  3.065945e-35
-    ## 37       30.0 1.329650e-02    3.111704e-02  4.137478e-04  2.167277e-02
-    ## 38       15.0 1.066423e-02    2.286116e-04  2.437967e-06  1.277046e-04
-    ## 39       10.0 9.355705e-03    8.111535e-08  7.588913e-10  3.975194e-08
-    ## 40       20.0 1.181202e-02    2.752618e-02  3.251396e-04  1.703133e-02
-    ## 41       40.0 1.334494e-02    1.171818e-07  1.563784e-09  8.191353e-08
-    ## 42       60.0 9.527364e-03    6.143457e-35  5.853096e-37  3.065945e-35
-    ## 43       60.0 9.527364e-03    6.143457e-35  5.853096e-37  3.065945e-35
-    ## 44       30.0 1.329650e-02    3.111704e-02  4.137478e-04  2.167277e-02
-    ## 45       49.0 1.213751e-02    3.191297e-17  3.873441e-19  2.028971e-17
-    ## 46       50.0 1.194158e-02    1.470049e-18  1.755470e-20  9.195436e-19
-    ## 47       20.0 1.181202e-02    2.752618e-02  3.251396e-04  1.703133e-02
-    ## 48       90.0 2.430531e-03   6.127925e-117 1.489411e-119 7.801774e-118
-    ## 49        8.5 8.945224e-03    4.046520e-09  3.619703e-11  1.896058e-09
-    ## 50       17.5 1.126378e-02    3.720408e-03  4.190585e-05  2.195095e-03
-    ## 51       25.0 1.271335e-02    1.415943e-01  1.800138e-03  9.429412e-02
-    ## 52       25.0 1.271335e-02    1.415943e-01  1.800138e-03  9.429412e-02
-    ## 53       45.0 1.280615e-02    2.008028e-12  2.571510e-14  1.346998e-12
-    ## 54       60.0 9.527364e-03    6.143457e-35  5.853096e-37  3.065945e-35
-    ## 55      180.0 8.219475e-08    0.000000e+00  0.000000e+00  0.000000e+00
-    ## 56       30.0 1.329650e-02    3.111704e-02  4.137478e-04  2.167277e-02
-    ## 57       30.0 1.329650e-02    3.111704e-02  4.137478e-04  2.167277e-02
-    ## 58       20.0 1.181202e-02    2.752618e-02  3.251396e-04  1.703133e-02
-    ## 59       30.0 1.329650e-02    3.111704e-02  4.137478e-04  2.167277e-02
-    ## 60       20.0 1.181202e-02    2.752618e-02  3.251396e-04  1.703133e-02
-    ## 61       25.0 1.271335e-02    1.415943e-01  1.800138e-03  9.429412e-02
-    ## 62      180.0 8.219475e-08    0.000000e+00  0.000000e+00  0.000000e+00
-    ## 63       30.0 1.329650e-02    3.111704e-02  4.137478e-04  2.167277e-02
-    ## 64       45.0 1.280615e-02    2.008028e-12  2.571510e-14  1.346998e-12
-    ## 65       45.0 1.280615e-02    2.008028e-12  2.571510e-14  1.346998e-12
-    ## 66       75.0 5.475204e-03    8.911020e-70  4.878965e-72  2.555680e-70
-    ## 67       20.0 1.181202e-02    2.752618e-02  3.251396e-04  1.703133e-02
-    ## 68       60.0 9.527364e-03    6.143457e-35  5.853096e-37  3.065945e-35
-    ## 69       45.0 1.280615e-02    2.008028e-12  2.571510e-14  1.346998e-12
-    ## 70       60.0 9.527364e-03    6.143457e-35  5.853096e-37  3.065945e-35
-    ## 71       20.0 1.181202e-02    2.752618e-02  3.251396e-04  1.703133e-02
+    ##     est_time          Prior           likelihood_time        Product         
+    ##  Min.   :  8.50   Min.   :8.200e-08   Min.   :0.0000000   Min.   :0.000e+00  
+    ##  1st Qu.: 20.00   1st Qu.:1.066e-02   1st Qu.:0.0000001   1st Qu.:1.200e-09  
+    ##  Median : 30.00   Median :1.181e-02   Median :0.0275262   Median :3.251e-04  
+    ##  Mean   : 35.32   Mean   :1.144e-02   Mean   :0.0212781   Mean   :2.689e-04  
+    ##  3rd Qu.: 40.00   3rd Qu.:1.330e-02   3rd Qu.:0.0311170   3rd Qu.:4.137e-04  
+    ##  Max.   :180.00   Max.   :1.351e-02   Max.   :0.1415943   Max.   :1.800e-03  
+    ##    Posterior        
+    ##  Min.   :0.000e+00  
+    ##  1st Qu.:6.000e-08  
+    ##  Median :1.703e-02  
+    ##  Mean   :1.408e-02  
+    ##  3rd Qu.:2.167e-02  
+    ##  Max.   :9.429e-02
 
 ``` r
 # prior and posterior comparison
-prior_post_plot(bayes_df_time)
+prior_post_plot(bayes_df_time, "Time")
 ```
 
-![](ST417-Bayesian-Modelling-Project_files/figure-gfm/time%20posterier-1.png)<!-- -->
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/time%20posterior-1.png)<!-- -->
+
+After updating the prior with the data we collected, we can see that the
+posterior distribution is much more concentrated around the mean of the
+data, with a mean of around 30 minutes and a standard deviation of
+around 5 minutes. The updated posterior for the avereage commute time
+greatly reduced the variability of the distribution. This is to be
+expected, as the data we collected is much more precise than the
+estimates we used to inform our prior.
+
+### Distance
+
+#### Distance Prior
+
+Using the est_distance data, we can now inform our prior for the average
+commute distance.
 
 ``` r
 theta_dist <- na.omit(data$est_distance)
-prior_dist <- dnorm(theta_dist, mean = mean(theta_dist), sd = sd(theta_dist))
-bayes_df_dist <- data.frame(theta_dist, prior_dist)
-bayes_df_dist
+Prior <- dnorm(theta_dist, mean = mean(theta_dist), sd = sd(theta_dist)) # nolint
+bayes_df_dist <- data.frame(theta_dist, Prior)
+summary(bayes_df_dist)
 ```
 
-    ##    theta_dist   prior_dist
-    ## 1         3.0 1.806677e-02
-    ## 2        20.0 2.155656e-02
-    ## 3        10.0 2.172206e-02
-    ## 4        10.0 2.172206e-02
-    ## 5         3.0 1.806677e-02
-    ## 6        10.0 2.172206e-02
-    ## 7         4.0 1.872681e-02
-    ## 8         3.5 1.840116e-02
-    ## 9         2.5 1.772433e-02
-    ## 10       15.0 2.251851e-02
-    ## 11       15.0 2.251851e-02
-    ## 12       15.0 2.251851e-02
-    ## 13        3.0 1.806677e-02
-    ## 14        5.0 1.934921e-02
-    ## 15        5.0 1.934921e-02
-    ## 16        5.0 1.934921e-02
-    ## 17       10.0 2.172206e-02
-    ## 18        4.0 1.872681e-02
-    ## 19        4.0 1.872681e-02
-    ## 20        3.5 1.840116e-02
-    ## 21       18.0 2.214702e-02
-    ## 22        2.0 1.737453e-02
-    ## 23        1.0 1.665566e-02
-    ## 24        3.0 1.806677e-02
-    ## 25       40.0 8.161101e-03
-    ## 26        2.0 1.737453e-02
-    ## 27       10.0 2.172206e-02
-    ## 28       10.0 2.172206e-02
-    ## 29        1.5 1.701807e-02
-    ## 30        5.0 1.934921e-02
-    ## 31       25.0 1.905549e-02
-    ## 32        5.0 1.934921e-02
-    ## 33       25.0 1.905549e-02
-    ## 34        2.0 1.737453e-02
-    ## 35       20.0 2.155656e-02
-    ## 36        3.0 1.806677e-02
-    ## 37        7.0 2.046021e-02
-    ## 38       80.0 2.554681e-05
-    ## 39       10.0 2.172206e-02
-    ## 40       10.0 2.172206e-02
-    ## 41       20.0 2.155656e-02
-    ## 42       75.0 6.942001e-05
-    ## 43        5.0 1.934921e-02
-    ## 44        5.0 1.934921e-02
-    ## 45       15.0 2.251851e-02
-    ## 46        3.0 1.806677e-02
-    ## 47       40.0 8.161101e-03
-    ## 48        7.0 2.046021e-02
-    ## 49        7.0 2.046021e-02
-    ## 50        2.0 1.737453e-02
-    ## 51       10.0 2.172206e-02
-    ## 52       35.0 1.172478e-02
-    ## 53       45.0 5.245582e-03
-    ## 54       70.0 1.741942e-04
-    ## 55        5.0 1.934921e-02
-    ## 56        5.0 1.934921e-02
-    ## 57        8.0 2.093909e-02
-    ## 58        7.0 2.046021e-02
-    ## 59        2.0 1.737453e-02
-    ## 60       10.0 2.172206e-02
-    ## 61       60.0 8.636435e-04
-    ## 62       20.0 2.155656e-02
-    ## 63       20.0 2.155656e-02
-    ## 64        4.2 1.885447e-02
-    ## 65       45.0 5.245582e-03
-    ## 66        2.0 1.737453e-02
-    ## 67       30.0 1.555471e-02
-    ## 68       21.0 2.116584e-02
-    ## 69       20.0 2.155656e-02
-    ## 70        5.0 1.934921e-02
+    ##    theta_dist        Prior          
+    ##  Min.   : 1.00   Min.   :2.555e-05  
+    ##  1st Qu.: 4.00   1st Qu.:1.746e-02  
+    ##  Median : 7.50   Median :1.935e-02  
+    ##  Mean   :14.76   Mean   :1.779e-02  
+    ##  3rd Qu.:20.00   3rd Qu.:2.156e-02  
+    ##  Max.   :80.00   Max.   :2.252e-02
 
 ``` r
 prob_plot(bayes_df_dist)
 ```
 
 ![](ST417-Bayesian-Modelling-Project_files/figure-gfm/distance%20prior-1.png)<!-- -->
+
+#### Distance Posterior
+
+With the prior for commute distance established, we can now update the
+prior with the likelihood of the data to get a posterior distribution.
 
 ``` r
 xbar_dist <- mean(data$distance, na.rm = TRUE)
@@ -406,178 +453,74 @@ se_dist <- sigma_dist / sqrt(n_dist)
 
 # likelihood calculation
 likelihood_dist <- dnorm(xbar_dist, mean = theta_dist, sd = se_dist)
-bayes_df_dist <- data.frame(theta_dist, prior_dist, likelihood_dist)
+bayes_df_dist <- data.frame(theta_dist, Prior, likelihood_dist)
 
 # posterior calculation
-bayes_df_dist$Product <- bayes_df_dist$prior_dist * bayes_df_dist$likelihood_dist # nolint
+bayes_df_dist$Product <- bayes_df_dist$Prior * bayes_df_dist$likelihood_dist # nolint
 bayes_df_dist$Posterior <- bayes_df_dist$Product / sum(bayes_df_dist$Product)
-bayes_df_dist
+summary(bayes_df_dist)
 ```
 
-    ##    theta_dist   prior_dist likelihood_dist       Product     Posterior
-    ## 1         3.0 1.806677e-02    2.082309e-03  3.762060e-05  6.488084e-04
-    ## 2        20.0 2.155656e-02    1.051059e-07  2.265722e-09  3.907486e-08
-    ## 3        10.0 2.172206e-02    1.788449e-01  3.884879e-03  6.699899e-02
-    ## 4        10.0 2.172206e-02    1.788449e-01  3.884879e-03  6.699899e-02
-    ## 5         3.0 1.806677e-02    2.082309e-03  3.762060e-05  6.488084e-04
-    ## 6        10.0 2.172206e-02    1.788449e-01  3.884879e-03  6.699899e-02
-    ## 7         4.0 1.872681e-02    8.170387e-03  1.530053e-04  2.638744e-03
-    ## 8         3.5 1.840116e-02    4.252260e-03  7.824650e-05  1.349447e-03
-    ## 9         2.5 1.772433e-02    9.594424e-04  1.700547e-05  2.932780e-04
-    ## 10       15.0 2.251851e-02    2.881651e-03  6.489048e-05  1.119107e-03
-    ## 11       15.0 2.251851e-02    2.881651e-03  6.489048e-05  1.119107e-03
-    ## 12       15.0 2.251851e-02    2.881651e-03  6.489048e-05  1.119107e-03
-    ## 13        3.0 1.806677e-02    2.082309e-03  3.762060e-05  6.488084e-04
-    ## 14        5.0 1.934921e-02    2.512655e-02  4.861788e-04  8.384686e-03
-    ## 15        5.0 1.934921e-02    2.512655e-02  4.861788e-04  8.384686e-03
-    ## 16        5.0 1.934921e-02    2.512655e-02  4.861788e-04  8.384686e-03
-    ## 17       10.0 2.172206e-02    1.788449e-01  3.884879e-03  6.699899e-02
-    ## 18        4.0 1.872681e-02    8.170387e-03  1.530053e-04  2.638744e-03
-    ## 19        4.0 1.872681e-02    8.170387e-03  1.530053e-04  2.638744e-03
-    ## 20        3.5 1.840116e-02    4.252260e-03  7.824650e-05  1.349447e-03
-    ## 21       18.0 2.214702e-02    1.300931e-05  2.881176e-07  4.968903e-06
-    ## 22        2.0 1.737453e-02    4.159497e-04  7.226930e-06  1.246363e-04
-    ## 23        1.0 1.665566e-02    6.512220e-05  1.084653e-06  1.870603e-05
-    ## 24        3.0 1.806677e-02    2.082309e-03  3.762060e-05  6.488084e-04
-    ## 25       40.0 8.161101e-03    6.573280e-52  5.364520e-54  9.251703e-53
-    ## 26        2.0 1.737453e-02    4.159497e-04  7.226930e-06  1.246363e-04
-    ## 27       10.0 2.172206e-02    1.788449e-01  3.884879e-03  6.699899e-02
-    ## 28       10.0 2.172206e-02    1.788449e-01  3.884879e-03  6.699899e-02
-    ## 29        1.5 1.701807e-02    1.696723e-04  2.887495e-06  4.979801e-05
-    ## 30        5.0 1.934921e-02    2.512655e-02  4.861788e-04  8.384686e-03
-    ## 31       25.0 1.905549e-02    8.678293e-15  1.653692e-16  2.851972e-15
-    ## 32        5.0 1.934921e-02    2.512655e-02  4.861788e-04  8.384686e-03
-    ## 33       25.0 1.905549e-02    8.678293e-15  1.653692e-16  2.851972e-15
-    ## 34        2.0 1.737453e-02    4.159497e-04  7.226930e-06  1.246363e-04
-    ## 35       20.0 2.155656e-02    1.051059e-07  2.265722e-09  3.907486e-08
-    ## 36        3.0 1.806677e-02    2.082309e-03  3.762060e-05  6.488084e-04
-    ## 37        7.0 2.046021e-02    1.144173e-01  2.341003e-03  4.037316e-02
-    ## 38       80.0 2.554681e-05   2.763793e-267 7.060610e-272 1.217679e-270
-    ## 39       10.0 2.172206e-02    1.788449e-01  3.884879e-03  6.699899e-02
-    ## 40       10.0 2.172206e-02    1.788449e-01  3.884879e-03  6.699899e-02
-    ## 41       20.0 2.155656e-02    1.051059e-07  2.265722e-09  3.907486e-08
-    ## 42       75.0 6.942001e-05   4.184718e-231 2.905031e-235 5.010044e-234
-    ## 43        5.0 1.934921e-02    2.512655e-02  4.861788e-04  8.384686e-03
-    ## 44        5.0 1.934921e-02    2.512655e-02  4.861788e-04  8.384686e-03
-    ## 45       15.0 2.251851e-02    2.881651e-03  6.489048e-05  1.119107e-03
-    ## 46        3.0 1.806677e-02    2.082309e-03  3.762060e-05  6.488084e-04
-    ## 47       40.0 8.161101e-03    6.573280e-52  5.364520e-54  9.251703e-53
-    ## 48        7.0 2.046021e-02    1.144173e-01  2.341003e-03  4.037316e-02
-    ## 49        7.0 2.046021e-02    1.144173e-01  2.341003e-03  4.037316e-02
-    ## 50        2.0 1.737453e-02    4.159497e-04  7.226930e-06  1.246363e-04
-    ## 51       10.0 2.172206e-02    1.788449e-01  3.884879e-03  6.699899e-02
-    ## 52       35.0 1.172478e-02    6.862965e-37  8.046678e-39  1.387738e-37
-    ## 53       45.0 5.245582e-03    1.425193e-69  7.475966e-72  1.289312e-70
-    ## 54       70.0 1.741942e-04   1.434326e-197 2.498512e-201 4.308958e-200
-    ## 55        5.0 1.934921e-02    2.512655e-02  4.861788e-04  8.384686e-03
-    ## 56        5.0 1.934921e-02    2.512655e-02  4.861788e-04  8.384686e-03
-    ## 57        8.0 2.093909e-02    1.694184e-01  3.547466e-03  6.117994e-02
-    ## 58        7.0 2.046021e-02    1.144173e-01  2.341003e-03  4.037316e-02
-    ## 59        2.0 1.737453e-02    4.159497e-04  7.226930e-06  1.246363e-04
-    ## 60       10.0 2.172206e-02    1.788449e-01  3.884879e-03  6.699899e-02
-    ## 61       60.0 8.636435e-04   1.954676e-138 1.688144e-141 2.911389e-140
-    ## 62       20.0 2.155656e-02    1.051059e-07  2.265722e-09  3.907486e-08
-    ## 63       20.0 2.155656e-02    1.051059e-07  2.265722e-09  3.907486e-08
-    ## 64        4.2 1.885447e-02    1.043002e-02  1.966526e-04  3.391489e-03
-    ## 65       45.0 5.245582e-03    1.425193e-69  7.475966e-72  1.289312e-70
-    ## 66        2.0 1.737453e-02    4.159497e-04  7.226930e-06  1.246363e-04
-    ## 67       30.0 1.555471e-02    1.622043e-24  2.523042e-26  4.351263e-25
-    ## 68       21.0 2.116584e-02    6.555457e-09  1.387518e-10  2.392926e-09
-    ## 69       20.0 2.155656e-02    1.051059e-07  2.265722e-09  3.907486e-08
-    ## 70        5.0 1.934921e-02    2.512655e-02  4.861788e-04  8.384686e-03
+    ##    theta_dist        Prior           likelihood_dist        Product         
+    ##  Min.   : 1.00   Min.   :2.555e-05   Min.   :0.000e+00   Min.   :0.000e+00  
+    ##  1st Qu.: 4.00   1st Qu.:1.746e-02   1st Qu.:1.100e-07   1st Qu.:2.000e-09  
+    ##  Median : 7.50   Median :1.935e-02   Median :2.482e-03   Median :5.126e-05  
+    ##  Mean   :14.76   Mean   :1.779e-02   Mean   :3.911e-02   Mean   :8.283e-04  
+    ##  3rd Qu.:20.00   3rd Qu.:2.156e-02   3rd Qu.:2.513e-02   3rd Qu.:4.862e-04  
+    ##  Max.   :80.00   Max.   :2.252e-02   Max.   :1.788e-01   Max.   :3.885e-03  
+    ##    Posterior        
+    ##  Min.   :0.000e+00  
+    ##  1st Qu.:4.000e-08  
+    ##  Median :8.840e-04  
+    ##  Mean   :1.429e-02  
+    ##  3rd Qu.:8.385e-03  
+    ##  Max.   :6.700e-02
 
 ``` r
 # prior and posterior comparison
-prior_post_plot(bayes_df_dist)
+prior_post_plot(bayes_df_dist, "Distance")
 ```
 
 ![](ST417-Bayesian-Modelling-Project_files/figure-gfm/distance%20posterior-1.png)<!-- -->
 
+We can see from the plots that the posterior distribution is much more
+concentrated around the mean of the data, with a mean of around 10km and
+a standard deviation of around 3km. Again we can see that the variabiliy
+of the distribution has be reduced greatly by updating the prior with
+the data we collected.
+
+### Cost
+
+#### Cost Prior
+
+In order to inform our prior for the average commute cost, we will use
+the est_cost data.
+
 ``` r
 theta_cost <- na.omit(data$est_cost)
-prior_cost <- dnorm(theta_cost, mean = mean(theta_cost), sd = sd(theta_cost))
-bayes_df_cost <- data.frame(theta_cost, prior_cost)
-bayes_df_cost
+Prior <- dnorm(theta_cost, mean = mean(theta_cost), sd = sd(theta_cost)) # nolint
+bayes_df_cost <- data.frame(theta_cost, Prior)
+summary(bayes_df_cost)
 ```
 
-    ##    theta_cost   prior_cost
-    ## 1         3.0 7.718878e-02
-    ## 2         5.0 9.683788e-02
-    ## 3         0.8 4.526016e-02
-    ## 4         3.0 7.718878e-02
-    ## 5         1.5 5.540087e-02
-    ## 6         6.0 9.889950e-02
-    ## 7         2.0 6.283649e-02
-    ## 8         5.0 9.683788e-02
-    ## 9         3.0 7.718878e-02
-    ## 10        6.0 9.889950e-02
-    ## 11        4.0 8.915902e-02
-    ## 12        5.0 9.683788e-02
-    ## 13        2.0 6.283649e-02
-    ## 14        6.0 9.889950e-02
-    ## 15        5.0 9.683788e-02
-    ## 16        5.0 9.683788e-02
-    ## 17        5.0 9.683788e-02
-    ## 18        2.0 6.283649e-02
-    ## 19        5.0 9.683788e-02
-    ## 20        3.0 7.718878e-02
-    ## 21       10.0 5.814039e-02
-    ## 22        4.5 9.363682e-02
-    ## 23        2.5 7.018179e-02
-    ## 24        0.0 3.462055e-02
-    ## 25        2.0 6.283649e-02
-    ## 26        7.0 9.497554e-02
-    ## 27        5.0 9.683788e-02
-    ## 28        5.0 9.683788e-02
-    ## 29        7.0 9.497554e-02
-    ## 30        1.0 4.809927e-02
-    ## 31       10.0 5.814039e-02
-    ## 32        5.0 9.683788e-02
-    ## 33        3.0 7.718878e-02
-    ## 34       15.0 7.492592e-03
-    ## 35        3.0 7.718878e-02
-    ## 36       10.0 5.814039e-02
-    ## 37        5.0 9.683788e-02
-    ## 38        5.0 9.683788e-02
-    ## 39       25.0 1.230565e-06
-    ## 40        5.0 9.683788e-02
-    ## 41        5.0 9.683788e-02
-    ## 42       10.0 5.814039e-02
-    ## 43       12.5 2.529821e-02
-    ## 44        5.0 9.683788e-02
-    ## 45        4.0 8.915902e-02
-    ## 46        4.0 8.915902e-02
-    ## 47        6.0 9.889950e-02
-    ## 48       10.0 5.814039e-02
-    ## 49        6.0 9.889950e-02
-    ## 50        5.0 9.683788e-02
-    ## 51        5.0 9.683788e-02
-    ## 52        5.0 9.683788e-02
-    ## 53       10.0 5.814039e-02
-    ## 54       10.0 5.814039e-02
-    ## 55       12.0 3.081293e-02
-    ## 56        3.0 7.718878e-02
-    ## 57        5.0 9.683788e-02
-    ## 58        2.0 6.283649e-02
-    ## 59        5.0 9.683788e-02
-    ## 60        1.0 4.809927e-02
-    ## 61       10.0 5.814039e-02
-    ## 62       15.0 7.492592e-03
-    ## 63        2.0 6.283649e-02
-    ## 64       10.0 5.814039e-02
-    ## 65        6.0 9.889950e-02
-    ## 66        2.0 6.283649e-02
-    ## 67       10.0 5.814039e-02
-    ## 68        6.0 9.889950e-02
-    ## 69        7.0 9.497554e-02
-    ## 70        4.0 8.915902e-02
-    ## 71       10.0 5.814039e-02
+    ##    theta_cost         Prior          
+    ##  Min.   : 0.000   Min.   :1.230e-06  
+    ##  1st Qu.: 3.000   1st Qu.:5.814e-02  
+    ##  Median : 5.000   Median :7.719e-02  
+    ##  Mean   : 5.842   Mean   :7.545e-02  
+    ##  3rd Qu.: 7.000   3rd Qu.:9.684e-02  
+    ##  Max.   :25.000   Max.   :9.890e-02
 
 ``` r
 prob_plot(bayes_df_cost)
 ```
 
 ![](ST417-Bayesian-Modelling-Project_files/figure-gfm/cost%20prior-1.png)<!-- -->
+
+#### Cost Posterior
+
+Updating the prior with the likelihood of the data to get a posterior
+distribution, should give us a better idea of the average commute cost.
 
 ``` r
 xbar_cost <- mean(data$cost, na.rm = TRUE)
@@ -587,93 +530,54 @@ se_cost <- sigma_cost / sqrt(n_cost)
 
 # likelihood calculation
 likelihood_cost <- dnorm(xbar_cost, mean = theta_cost, sd = se_cost)
-bayes_df_cost <- data.frame(theta_cost, prior_cost, likelihood_cost)
+bayes_df_cost <- data.frame(theta_cost, Prior, likelihood_cost)
 
 # posterior calculation
-bayes_df_cost$Product <- bayes_df_cost$prior_cost * bayes_df_cost$likelihood_cost # nolint
+bayes_df_cost$Product <- bayes_df_cost$Prior * bayes_df_cost$likelihood_cost # nolint
 bayes_df_cost$Posterior <- bayes_df_cost$Product / sum(bayes_df_cost$Product)
-bayes_df_cost
+summary(bayes_df_cost)
 ```
 
-    ##    theta_cost   prior_cost likelihood_cost       Product     Posterior
-    ## 1         3.0 7.718878e-02    4.916232e-03  3.794780e-04  9.593465e-04
-    ## 2         5.0 9.683788e-02    5.104159e-15  4.942759e-16  1.249564e-15
-    ## 3         0.8 4.526016e-02    1.083789e-01  4.905248e-03  1.240080e-02
-    ## 4         3.0 7.718878e-02    4.916232e-03  3.794780e-04  9.593465e-04
-    ## 5         1.5 5.540087e-02    8.971016e-01  4.970021e-02  1.256456e-01
-    ## 6         6.0 9.889950e-02    7.452719e-25  7.370701e-26  1.863364e-25
-    ## 7         2.0 6.283649e-02    6.914028e-01  4.344532e-02  1.098328e-01
-    ## 8         5.0 9.683788e-02    5.104159e-15  4.942759e-16  1.249564e-15
-    ## 9         3.0 7.718878e-02    4.916232e-03  3.794780e-04  9.593465e-04
-    ## 10        6.0 9.889950e-02    7.452719e-25  7.370701e-26  1.863364e-25
-    ## 11        4.0 8.915902e-02    9.572604e-08  8.534840e-09  2.157666e-08
-    ## 12        5.0 9.683788e-02    5.104159e-15  4.942759e-16  1.249564e-15
-    ## 13        2.0 6.283649e-02    6.914028e-01  4.344532e-02  1.098328e-01
-    ## 14        6.0 9.889950e-02    7.452719e-25  7.370701e-26  1.863364e-25
-    ## 15        5.0 9.683788e-02    5.104159e-15  4.942759e-16  1.249564e-15
-    ## 16        5.0 9.683788e-02    5.104159e-15  4.942759e-16  1.249564e-15
-    ## 17        5.0 9.683788e-02    5.104159e-15  4.942759e-16  1.249564e-15
-    ## 18        2.0 6.283649e-02    6.914028e-01  4.344532e-02  1.098328e-01
-    ## 19        5.0 9.683788e-02    5.104159e-15  4.942759e-16  1.249564e-15
-    ## 20        3.0 7.718878e-02    4.916232e-03  3.794780e-04  9.593465e-04
-    ## 21       10.0 5.814039e-02    8.032317e-90  4.670021e-91  1.180613e-90
-    ## 22        4.5 9.363682e-02    4.621576e-11  4.327497e-12  1.094021e-11
-    ## 23        2.5 7.018179e-02    1.218975e-01  8.554983e-03  2.162759e-02
-    ## 24        0.0 3.462055e-02    2.808134e-04  9.721913e-06  2.457767e-05
-    ## 25        2.0 6.283649e-02    6.914028e-01  4.344532e-02  1.098328e-01
-    ## 26        7.0 9.497554e-02    2.979900e-37  2.830176e-38  7.154880e-38
-    ## 27        5.0 9.683788e-02    5.104159e-15  4.942759e-16  1.249564e-15
-    ## 28        5.0 9.683788e-02    5.104159e-15  4.942759e-16  1.249564e-15
-    ## 29        7.0 9.497554e-02    2.979900e-37  2.830176e-38  7.154880e-38
-    ## 30        1.0 4.809927e-02    2.662725e-01  1.280751e-02  3.237827e-02
-    ## 31       10.0 5.814039e-02    8.032317e-90  4.670021e-91  1.180613e-90
-    ## 32        5.0 9.683788e-02    5.104159e-15  4.942759e-16  1.249564e-15
-    ## 33        3.0 7.718878e-02    4.916232e-03  3.794780e-04  9.593465e-04
-    ## 34       15.0 7.492592e-03   1.094379e-228 8.199736e-231 2.072950e-230
-    ## 35        3.0 7.718878e-02    4.916232e-03  3.794780e-04  9.593465e-04
-    ## 36       10.0 5.814039e-02    8.032317e-90  4.670021e-91  1.180613e-90
-    ## 37        5.0 9.683788e-02    5.104159e-15  4.942759e-16  1.249564e-15
-    ## 38        5.0 9.683788e-02    5.104159e-15  4.942759e-16  1.249564e-15
-    ## 39       25.0 1.230565e-06    0.000000e+00  0.000000e+00  0.000000e+00
-    ## 40        5.0 9.683788e-02    5.104159e-15  4.942759e-16  1.249564e-15
-    ## 41        5.0 9.683788e-02    5.104159e-15  4.942759e-16  1.249564e-15
-    ## 42       10.0 5.814039e-02    8.032317e-90  4.670021e-91  1.180613e-90
-    ## 43       12.5 2.529821e-02   3.018756e-151 7.636914e-153 1.930664e-152
-    ## 44        5.0 9.683788e-02    5.104159e-15  4.942759e-16  1.249564e-15
-    ## 45        4.0 8.915902e-02    9.572604e-08  8.534840e-09  2.157666e-08
-    ## 46        4.0 8.915902e-02    9.572604e-08  8.534840e-09  2.157666e-08
-    ## 47        6.0 9.889950e-02    7.452719e-25  7.370701e-26  1.863364e-25
-    ## 48       10.0 5.814039e-02    8.032317e-90  4.670021e-91  1.180613e-90
-    ## 49        6.0 9.889950e-02    7.452719e-25  7.370701e-26  1.863364e-25
-    ## 50        5.0 9.683788e-02    5.104159e-15  4.942759e-16  1.249564e-15
-    ## 51        5.0 9.683788e-02    5.104159e-15  4.942759e-16  1.249564e-15
-    ## 52        5.0 9.683788e-02    5.104159e-15  4.942759e-16  1.249564e-15
-    ## 53       10.0 5.814039e-02    8.032317e-90  4.670021e-91  1.180613e-90
-    ## 54       10.0 5.814039e-02    8.032317e-90  4.670021e-91  1.180613e-90
-    ## 55       12.0 3.081293e-02   1.111943e-137 3.426222e-139 8.661724e-139
-    ## 56        3.0 7.718878e-02    4.916232e-03  3.794780e-04  9.593465e-04
-    ## 57        5.0 9.683788e-02    5.104159e-15  4.942759e-16  1.249564e-15
-    ## 58        2.0 6.283649e-02    6.914028e-01  4.344532e-02  1.098328e-01
-    ## 59        5.0 9.683788e-02    5.104159e-15  4.942759e-16  1.249564e-15
-    ## 60        1.0 4.809927e-02    2.662725e-01  1.280751e-02  3.237827e-02
-    ## 61       10.0 5.814039e-02    8.032317e-90  4.670021e-91  1.180613e-90
-    ## 62       15.0 7.492592e-03   1.094379e-228 8.199736e-231 2.072950e-230
-    ## 63        2.0 6.283649e-02    6.914028e-01  4.344532e-02  1.098328e-01
-    ## 64       10.0 5.814039e-02    8.032317e-90  4.670021e-91  1.180613e-90
-    ## 65        6.0 9.889950e-02    7.452719e-25  7.370701e-26  1.863364e-25
-    ## 66        2.0 6.283649e-02    6.914028e-01  4.344532e-02  1.098328e-01
-    ## 67       10.0 5.814039e-02    8.032317e-90  4.670021e-91  1.180613e-90
-    ## 68        6.0 9.889950e-02    7.452719e-25  7.370701e-26  1.863364e-25
-    ## 69        7.0 9.497554e-02    2.979900e-37  2.830176e-38  7.154880e-38
-    ## 70        4.0 8.915902e-02    9.572604e-08  8.534840e-09  2.157666e-08
-    ## 71       10.0 5.814039e-02    8.032317e-90  4.670021e-91  1.180613e-90
+    ##    theta_cost         Prior           likelihood_cost       Product         
+    ##  Min.   : 0.000   Min.   :1.230e-06   Min.   :0.000000   Min.   :0.0000000  
+    ##  1st Qu.: 3.000   1st Qu.:5.814e-02   1st Qu.:0.000000   1st Qu.:0.0000000  
+    ##  Median : 5.000   Median :7.719e-02   Median :0.000000   Median :0.0000000  
+    ##  Mean   : 5.842   Mean   :7.545e-02   Mean   :0.092034   Mean   :0.0055712  
+    ##  3rd Qu.: 7.000   3rd Qu.:9.684e-02   3rd Qu.:0.004916   3rd Qu.:0.0003795  
+    ##  Max.   :25.000   Max.   :9.890e-02   Max.   :0.897102   Max.   :0.0497002  
+    ##    Posterior        
+    ##  Min.   :0.0000000  
+    ##  1st Qu.:0.0000000  
+    ##  Median :0.0000000  
+    ##  Mean   :0.0140845  
+    ##  3rd Qu.:0.0009593  
+    ##  Max.   :0.1256456
 
 ``` r
 # prior and posterior comparison
-prior_post_plot(bayes_df_cost)
+prior_post_plot(bayes_df_cost, "Cost")
 ```
 
 ![](ST417-Bayesian-Modelling-Project_files/figure-gfm/cost%20posterior-1.png)<!-- -->
+
+Just like we have seen in the previous plots, the posterior distribution
+has a much lower variability than the prior distribution. We can see
+that the distribution has moved to become more concentrated around the
+mean of the data, with a mean commute cost of around €10 and a standard
+deviation of roughly €3.
+
+With the posterior distributions for the average commute time, distance
+and cost established, we can now use these distributions to make
+predictions about the commute time, distance and cost.
+
+### Point Estimates and 95% Credible Intervals
+
+Using our posterior distributions, we will now to generate point
+estimates and 95% credible intervals for the average commute time,
+distance and cost. This will enable us to predict range of likely
+commute times, distances and costs, as well as the most likely commute
+time, distance and cost, for the average University College Galway
+student.
 
 ``` r
 m0_time <- mean(data$est_time, na.rm = TRUE)
@@ -697,12 +601,13 @@ post_sd_cost <- sqrt((1 / (se_cost^2) + 1 / (s0_cost^2))^(-1))
 
 ``` r
 # 95% credible intervals
+set.seed(1)
 time_sims <- rnorm(10000, mean = post_mean_time, sd = post_sd_time)
 time_point_estimate <- mean(time_sims)
 time_point_estimate
 ```
 
-    ## [1] 25.15946
+    ## [1] 25.17104
 
 ``` r
 time_ci95 <- quantile(time_sims, probs = c(0.025, 0.975))
@@ -710,10 +615,15 @@ time_ci95
 ```
 
     ##     2.5%    97.5% 
-    ## 19.68944 30.73285
+    ## 19.51797 30.76657
 
 ``` r
-normal_interval(0.95, time_ci95)
+ggplot(data.frame(time_sims), aes(x = time_sims)) +
+  geom_density(fill = "darkgray", alpha = 0.2) +
+  geom_vline(xintercept = time_ci95, col = "red", lwd = 1) +
+  ggtitle("Time") +
+  xlab("Time (min)") +
+  ylab("Density")
 ```
 
 ![](ST417-Bayesian-Modelling-Project_files/figure-gfm/95%20credible%20intervals-1.png)<!-- -->
@@ -724,7 +634,7 @@ dist_point_estimate <- mean(dist_sims)
 dist_point_estimate
 ```
 
-    ## [1] 9.154057
+    ## [1] 9.175626
 
 ``` r
 dist_ci95 <- quantile(dist_sims, probs = c(0.025, 0.975))
@@ -732,10 +642,15 @@ dist_ci95
 ```
 
     ##      2.5%     97.5% 
-    ##  5.234244 13.105129
+    ##  5.371109 13.171538
 
 ``` r
-normal_interval(0.95, dist_ci95)
+ggplot(data.frame(dist_sims), aes(x = dist_sims)) +
+  geom_density(fill = "darkgray", alpha = 0.2) +
+  geom_vline(xintercept = dist_ci95, col = "red", lwd = 1) +
+  ggtitle("Distance") +
+  xlab("Distance (km)") +
+  ylab("Density")
 ```
 
 ![](ST417-Bayesian-Modelling-Project_files/figure-gfm/95%20credible%20intervals-2.png)<!-- -->
@@ -746,87 +661,46 @@ cost_point_estimate <- mean(cost_sims)
 cost_point_estimate
 ```
 
-    ## [1] 1.703047
+    ## [1] 1.707972
 
 ``` r
 cost_ci95 <- quantile(cost_sims, probs = c(0.025, 0.975))
 cost_ci95
 ```
 
-    ##      2.5%     97.5% 
-    ## 0.9078246 2.4871981
+    ##     2.5%    97.5% 
+    ## 0.898855 2.521152
 
 ``` r
-normal_interval(0.95, cost_ci95)
+ggplot(data.frame(cost_sims), aes(x = cost_sims)) +
+  geom_density(fill = "darkgray", alpha = 0.2) +
+  geom_vline(xintercept = cost_ci95, col = "red", lwd = 1) +
+  ggtitle("Cost") +
+  xlab("Cost (EUR)") +
+  ylab("Density")
 ```
 
 ![](ST417-Bayesian-Modelling-Project_files/figure-gfm/95%20credible%20intervals-3.png)<!-- -->
 
-``` r
-# # 95% credible intervals plot
-# x <- seq(from = 0, to = 100, length.out = 1000)
+The 95% credible intervals and Point Estimates suggest that:
 
-# priorx_time <- dnorm(x, mean = mean(data$est_time, na.rm = TRUE), sd = sd(data$est_time, na.rm = TRUE)) # nolint
-# priorx_dist <- dnorm(x, mean = mean(data$est_distance, na.rm = TRUE), sd = sd(data$est_distance, na.rm = TRUE)) # nolint
-# priorx_cost <- dnorm(x, mean = mean(data$est_cost, na.rm = TRUE), sd = sd(data$est_cost, na.rm = TRUE)) # nolint
-
-# datax_time  <- dnorm(x, mean = mean(data$time, na.rm = TRUE), sd = se_time)
-# datax_dist  <- dnorm(x, mean = mean(data$distance, na.rm = TRUE), sd = se_dist)
-# datax_cost  <- dnorm(x, mean = mean(data$cost, na.rm = TRUE), sd = se_cost)
-
-# postx_time  <- dnorm(x, mean = post_mean_time, sd = post_sd_time)
-# postx_dist  <- dnorm(x, mean = post_mean_dist, sd = post_sd_dist)
-# postx_cost  <- dnorm(x, mean = post_mean_cost, sd = post_sd_cost)
-
-# plot(x, priorx_time, type = "l", col = "blue", lwd = 2, xlab = "Time (min)", ylab = "Density", main = "Prior and Posterior Distributions") # nolint
-# lines(x, datax_time, col = "red", lwd = 2)
-# lines(x, postx_time, col = "green", lwd = 2)
-
-# legend("topright", legend = c("Prior", "Data", "Posterior"), col = c("blue", "red", "green"), lwd = 2) # nolint
-```
-
-``` r
-x <- seq(-60, 80, length = 150)
-
-priorx_time <- dnorm(x, mean = mean(data$est_time, na.rm = TRUE),
-                     sd = sd(data$est_time, na.rm = TRUE))
-priorx_dist <- dnorm(x, mean = mean(data$est_distance, na.rm = TRUE),
-                     sd = sd(data$est_distance, na.rm = TRUE))
-priorx_cost <- dnorm(x, mean = mean(data$est_cost, na.rm = TRUE),
-                     sd = sd(data$est_cost, na.rm = TRUE))
-
-datax_time  <- dnorm(x, mean = mean(data$time, na.rm = TRUE), sd = se_time)
-datax_dist  <- dnorm(x, mean = mean(data$distance, na.rm = TRUE), sd = se_dist)
-datax_cost  <- dnorm(x, mean = mean(data$cost, na.rm = TRUE), sd = se_cost)
-
-postx_time <- dnorm(x, mean = post_mean_time, sd = post_sd_time)
-postx_dist <- dnorm(x, mean = post_mean_dist, sd = post_sd_dist)
-postx_cost <- dnorm(x, mean = post_mean_cost, sd = post_sd_cost)
-
-plot(x, priorx_time, type = "l", lwd = 3, xlim = c(-40, 60), ylim = c(0, 0.8),
-     col = "red4", main = "", xlab = "theta", ylab = "")
-lines(x, priorx_dist, col = "green4", lwd = 3)
-lines(x, priorx_cost, col = "orange3", lwd = 3)
-
-lines(x, datax_time, col = "black", lwd = 3)
-lines(x, datax_dist, col = "black", lwd = 3)
-lines(x, datax_cost, col = "black", lwd = 3)
-
-lines(x, postx_time, col = "red", lwd = 3)
-lines(x, postx_dist, col = "green", lwd = 3)
-lines(x, postx_cost, col = "orange", lwd = 3)
-
-legend("topright",
-       c("Time Prior", "Distance Prior", "Cost Prior", "Data",
-        "Time Post", "Distance Post", "Cost Post"),
-       lty = 1, lwd = 3,
-       col = c("red4", "green4", "orange3", "black", "red", "green", "orange")
-       )
-```
-
-![](ST417-Bayesian-Modelling-Project_files/figure-gfm/distributions%20plot-1.png)<!-- -->
+- The average time of a commute should be between 19.5 and 30.76
+  minutes, with a commute time of 25.17 minutes on average.
+- The average distance of a commute should be between 5.37 and 13.17
+  kilometres, with a commute length of 9.17 kilometres on average.
+- The average cost of a commute should be between €0.89 and €2.52, with
+  a cost of €1.71 for an average student’s commute to the University of
+  Galway.
 
 ## Bayesian Analysis with rjags
+
+Next, we decided to use the rjags package in order to define a Markov
+Chain Monte Carlo (MCMC) model to generate a new set of samples for new
+posterior distributions for the average commute time, distance and cost.
+This will enable us to see how representitive the data we collected when
+compared to a much larger sample size. We will do this by comparing the
+results of the rjags model to the results of the initial Bayesian
+analysis.
 
 ``` r
 # define model
@@ -869,78 +743,9 @@ data <- list(
 )
 ```
 
-``` r
-# compile model
-jags_model <- jags.model(
-  textConnection(model),
-  data = data,
-  inits = list(.RNG.name = "base::Wichmann-Hill", .RNG.seed = 1989)
-)
-```
-
-    ## Compiling model graph
-    ##    Resolving undeclared variables
-    ##    Allocating nodes
-    ## Graph information:
-    ##    Observed stochastic nodes: 207
-    ##    Unobserved stochastic nodes: 15
-    ##    Total graph size: 235
-    ## 
-    ## Initializing model
-
-``` r
-# burn in model
-update(jags_model, 1000)
-```
-
-``` r
-# simulate posterior
-sims <- coda.samples(
-  jags_model,
-  variable.names = c("mu_time", "mu_dist", "mu_cost",
-                     "sigma_time", "sigma_dist", "sigma_cost"),
-  n.iter = 10000
-)
-```
-
-``` r
-# plot sims
-plot(sims)
-```
-
-![](ST417-Bayesian-Modelling-Project_files/figure-gfm/sims%20plot-1.png)<!-- -->![](ST417-Bayesian-Modelling-Project_files/figure-gfm/sims%20plot-2.png)<!-- -->
-
-``` r
-# summary
-summary(sims)
-```
-
-    ## 
-    ## Iterations = 1001:11000
-    ## Thinning interval = 1 
-    ## Number of chains = 1 
-    ## Sample size per chain = 10000 
-    ## 
-    ## 1. Empirical mean and standard deviation for each variable,
-    ##    plus standard error of the mean:
-    ## 
-    ##                 Mean        SD  Naive SE Time-series SE
-    ## mu_cost     1.711712 0.4108362 4.108e-03      4.108e-03
-    ## mu_dist     9.177441 2.0488922 2.049e-02      2.049e-02
-    ## mu_time    25.222705 2.8560561 2.856e-02      2.949e-02
-    ## sigma_cost  0.094969 0.0153308 1.533e-04      1.554e-04
-    ## sigma_dist  0.003397 0.0005688 5.688e-06      5.771e-06
-    ## sigma_time  0.001763 0.0002961 2.961e-06      3.039e-06
-    ## 
-    ## 2. Quantiles for each variable:
-    ## 
-    ##                 2.5%       25%       50%       75%     97.5%
-    ## mu_cost     0.905480  1.432644  1.715283  1.989193  2.513230
-    ## mu_dist     5.111418  7.793923  9.174260 10.530034 13.236099
-    ## mu_time    19.595055 23.313983 25.193080 27.133262 30.866511
-    ## sigma_cost  0.067490  0.084089  0.094029  0.104970  0.126945
-    ## sigma_dist  0.002380  0.003005  0.003368  0.003753  0.004620
-    ## sigma_time  0.001227  0.001556  0.001748  0.001952  0.002377
+After defining the values of all variables in the model definition, we
+will now compile the model and the data, including the starting values
+as well as setting the number of chains to 3.
 
 ``` r
 # compile model
@@ -966,6 +771,10 @@ jags_model_mc <- jags.model(
 update(jags_model_mc, 1000)
 ```
 
+After a burn-in period of 1,000 iterations, we simulated 10,000 new
+values from the posterior data. From these simulations, we can plot
+trace and density plots of each feature.
+
 ``` r
 # simulate posterior
 sims_mc <- coda.samples(
@@ -983,6 +792,12 @@ plot(sims_mc)
 
 ![](ST417-Bayesian-Modelling-Project_files/figure-gfm/sims_mc%20plot-1.png)<!-- -->![](ST417-Bayesian-Modelling-Project_files/figure-gfm/sims_mc%20plot-2.png)<!-- -->
 
+The trace plots all show good stability and mixing throughout the
+iterations, and do not show any clear patterns throughout, this suggests
+that the model has reached convergence. The density plots appear to be
+smooth distributions, suggesting that the simulations were
+representative of all possible values in the posterior distributions.
+
 ``` r
 # summary
 summary(sims_mc)
@@ -998,22 +813,22 @@ summary(sims_mc)
     ##    plus standard error of the mean:
     ## 
     ##                 Mean        SD  Naive SE Time-series SE
-    ## mu_cost     1.704835 0.4075758 2.353e-03      2.434e-03
-    ## mu_dist     9.194207 2.0421429 1.179e-02      1.188e-02
-    ## mu_time    25.230182 2.8366884 1.638e-02      1.636e-02
-    ## sigma_cost  0.094763 0.0155994 9.006e-05      9.045e-05
-    ## sigma_dist  0.003407 0.0005726 3.306e-06      3.371e-06
-    ## sigma_time  0.001755 0.0002904 1.677e-06      1.707e-06
+    ## mu_cost     1.704602 0.4082015 2.357e-03      2.357e-03
+    ## mu_dist     9.197053 2.0454362 1.181e-02      1.181e-02
+    ## mu_time    25.164191 2.8476808 1.644e-02      1.644e-02
+    ## sigma_cost  0.094769 0.0154579 8.925e-05      8.925e-05
+    ## sigma_dist  0.003410 0.0005740 3.314e-06      3.334e-06
+    ## sigma_time  0.001758 0.0002968 1.714e-06      1.755e-06
     ## 
     ## 2. Quantiles for each variable:
     ## 
     ##                 2.5%       25%       50%       75%     97.5%
-    ## mu_cost     0.904685  1.430102  1.703895  1.977103  2.502388
-    ## mu_dist     5.208362  7.830891  9.175842 10.539685 13.292236
-    ## mu_time    19.657846 23.330605 25.233724 27.108535 30.842456
-    ## sigma_cost  0.066792  0.083808  0.093829  0.104883  0.127968
-    ## sigma_dist  0.002373  0.003007  0.003377  0.003775  0.004613
-    ## sigma_time  0.001234  0.001553  0.001739  0.001942  0.002373
+    ## mu_cost     0.899088  1.427576  1.705809  1.978117  2.500042
+    ## mu_dist     5.174350  7.846899  9.192829 10.586733 13.200863
+    ## mu_time    19.512526 23.280386 25.178990 27.056554 30.724688
+    ## sigma_cost  0.067058  0.083896  0.093998  0.104713  0.127381
+    ## sigma_dist  0.002387  0.003009  0.003375  0.003776  0.004628
+    ## sigma_time  0.001225  0.001549  0.001742  0.001948  0.002383
 
 ``` r
 # gelman-rubin statistic
@@ -1040,6 +855,13 @@ gelman.plot(sims_mc)
 
 ![](ST417-Bayesian-Modelling-Project_files/figure-gfm/sims_mc%20gelman-rubin-1.png)<!-- -->
 
+A Gelman-Rubin statistic, where the estimated variance of the parameter
+is a weighted sum of the between and within chain variances, of R≅1
+suggests that the chains have converged. The parameters all have values
+of R=1 and the plots show convergence around 1 so this suggests that the
+3 Markov chains in the model have converged. This can also be see in the
+Gelman-Rubin plot, where the lines are all close to 1.
+
 ``` r
 # autocorrelation
 autocorr.plot(sims_mc[[1]])
@@ -1047,32 +869,40 @@ autocorr.plot(sims_mc[[1]])
 
 ![](ST417-Bayesian-Modelling-Project_files/figure-gfm/sims_mc%20autocorr-1.png)<!-- -->
 
+The autocorrelation plots show very minimal autocorrelation across all
+features in the model.
+
+With MCMC model appearing to have converged, we can generate 95%
+credible intervals for each feature in the model. This can be compared
+to the 95% credible intervals generated from the initial Bayesian
+analysis.
+
 ``` r
 chains <- data.frame(sims_mc[[1]])
 
 # 95% credible intervals
-CI_time <- quantile(chains$mu_time, probs = c(0.025, 0.975))
-CI_dist <- quantile(chains$mu_dist, probs = c(0.025, 0.975))
-CI_cost <- quantile(chains$mu_cost, probs = c(0.025, 0.975))
+CI_time <- quantile(chains$mu_time, probs = c(0.025, 0.975)) # nolint
+CI_dist <- quantile(chains$mu_dist, probs = c(0.025, 0.975)) # nolint
+CI_cost <- quantile(chains$mu_cost, probs = c(0.025, 0.975)) # nolint
 CI_time
 ```
 
     ##     2.5%    97.5% 
-    ## 19.54819 30.79420
+    ## 19.41277 30.80398
 
 ``` r
 CI_dist
 ```
 
     ##      2.5%     97.5% 
-    ##  5.297461 13.281096
+    ##  5.208994 13.203059
 
 ``` r
 CI_cost
 ```
 
-    ##      2.5%     97.5% 
-    ## 0.8931754 2.5022894
+    ##     2.5%    97.5% 
+    ## 0.887578 2.512715
 
 ``` r
 # 95% CI plots
@@ -1111,10 +941,15 @@ ggplot(chains, aes(x = mu_cost)) +
 
 ![](ST417-Bayesian-Modelling-Project_files/figure-gfm/95%20CI%20plot-3.png)<!-- -->
 
+The 95% credible interval plots show that the average student takes
+between 19.5 and 30.8 minutes to travel between 5.2 and 13.2 kilometres
+at a cost of between €0.89 and €2.51. This is very similar to the
+predictions made from the original posterior distribution.
+
 ## Regression
 
 ``` r
-library('dplyr')
+library("dplyr")
 new_data <- read.csv("origin_weather_data.csv")
 new_data <- replace(new_data, is.na(new_data), 0)
 # length(unique(c(new_data$est_transport, new_data$est_transport)))
@@ -1186,32 +1021,32 @@ summary(sims_cost)
     ##    plus standard error of the mean:
     ## 
     ##        Mean      SD  Naive SE Time-series SE
-    ## a  1.476564 1.24780 7.204e-03      0.0509609
-    ## b -0.003931 0.01603 9.254e-05      0.0002310
-    ## c  0.093174 0.02658 1.535e-04      0.0003350
-    ## d -0.744111 0.27952 1.614e-03      0.0145516
-    ## e -0.188393 0.16761 9.677e-04      0.0064356
-    ## f  0.744401 0.09943 5.741e-04      0.0006116
-    ## g  0.074072 0.04272 2.467e-04      0.0019376
-    ## s  2.997449 0.27046 1.562e-03      0.0041250
+    ## a  1.481860 1.24337 7.179e-03      0.0493431
+    ## b -0.004401 0.01610 9.298e-05      0.0002394
+    ## c  0.093806 0.02652 1.531e-04      0.0003600
+    ## d -0.733802 0.28650 1.654e-03      0.0153231
+    ## e -0.192603 0.16352 9.441e-04      0.0060253
+    ## f  0.743460 0.10033 5.792e-04      0.0006074
+    ## g  0.072706 0.04336 2.504e-04      0.0019826
+    ## s  2.994140 0.27119 1.566e-03      0.0045222
     ## 
     ## 2. Quantiles for each variable:
     ## 
     ##        2.5%      25%       50%       75%    97.5%
-    ## a  0.048833  0.51400  1.165341  2.105458  4.56745
-    ## b -0.035123 -0.01467 -0.004025  0.006898  0.02754
-    ## c  0.041079  0.07529  0.093179  0.111102  0.14475
-    ## d -1.314753 -0.92726 -0.740186 -0.553958 -0.21280
-    ## e -0.540407 -0.29465 -0.180788 -0.076157  0.12570
-    ## f  0.547945  0.67822  0.744741  0.811125  0.93870
-    ## g -0.006594  0.04482  0.072959  0.101908  0.16142
-    ## s  2.531126  2.80561  2.976515  3.166013  3.58422
+    ## a  0.048344  0.50930  1.161550  2.128262  4.55757
+    ## b -0.035928 -0.01505 -0.004415  0.006189  0.02742
+    ## c  0.041177  0.07620  0.093839  0.111388  0.14584
+    ## d -1.311113 -0.92479 -0.726983 -0.534029 -0.20198
+    ## e -0.534087 -0.29604 -0.185504 -0.081788  0.11555
+    ## f  0.546261  0.67548  0.743672  0.810746  0.94050
+    ## g -0.009035  0.04317  0.071750  0.101294  0.15991
+    ## s  2.514718  2.80454  2.974630  3.163805  3.57686
 
 ``` r
 plot(sims_cost)
 ```
 
-![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-8-2.png)<!-- -->
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-9-2.png)<!-- -->
 
 ``` r
 gelman.diag(sims_cost)
@@ -1220,30 +1055,30 @@ gelman.diag(sims_cost)
     ## Potential scale reduction factors:
     ## 
     ##   Point est. Upper C.I.
-    ## a       1.02       1.05
+    ## a       1.00       1.01
     ## b       1.00       1.00
     ## c       1.00       1.00
-    ## d       1.00       1.01
-    ## e       1.01       1.03
+    ## d       1.01       1.01
+    ## e       1.00       1.01
     ## f       1.00       1.00
-    ## g       1.00       1.00
+    ## g       1.00       1.01
     ## s       1.00       1.00
     ## 
     ## Multivariate psrf
     ## 
-    ## 1.01
+    ## 1
 
 ``` r
 gelman.plot(sims_cost)
 ```
 
-![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-8-3.png)<!-- -->
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-9-3.png)<!-- -->
 
 ``` r
 autocorr.plot(sims_cost[[1]])
 ```
 
-![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-8-4.png)<!-- -->
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-9-4.png)<!-- -->
 
 ``` r
 time_model <- "model{
@@ -1311,32 +1146,32 @@ summary(sims_time)
     ##    plus standard error of the mean:
     ## 
     ##       Mean      SD  Naive SE Time-series SE
-    ## a  1.10718 0.98842 0.0057066      0.0336096
-    ## b  0.27186 0.11450 0.0006611      0.0019743
-    ## c  0.04370 0.02760 0.0001593      0.0004017
-    ## d -0.74080 0.26684 0.0015406      0.0133554
-    ## e -0.23222 0.14745 0.0008513      0.0049901
-    ## f  0.74082 0.10007 0.0005778      0.0006081
-    ## g  0.06914 0.04115 0.0002376      0.0019098
-    ## s  2.83999 0.25833 0.0014915      0.0041122
+    ## a  1.10596 0.99362 0.0057367      0.0346754
+    ## b  0.27094 0.11270 0.0006507      0.0019022
+    ## c  0.04414 0.02713 0.0001566      0.0003878
+    ## d -0.74882 0.25634 0.0014800      0.0126530
+    ## e -0.22683 0.14363 0.0008292      0.0046241
+    ## f  0.74183 0.09947 0.0005743      0.0006091
+    ## g  0.06988 0.03902 0.0002253      0.0017517
+    ## s  2.83884 0.25747 0.0014865      0.0039526
     ## 
     ## 2. Quantiles for each variable:
     ## 
     ##        2.5%      25%      50%      75%    97.5%
-    ## a  0.029541  0.34158  0.82876  1.60276  3.61382
-    ## b  0.045344  0.19556  0.27161  0.34923  0.49467
-    ## c -0.010863  0.02552  0.04389  0.06214  0.09778
-    ## d -1.275823 -0.92134 -0.73171 -0.55466 -0.23206
-    ## e -0.530289 -0.33029 -0.23157 -0.13125  0.04784
-    ## f  0.544530  0.67338  0.74142  0.80820  0.93571
-    ## g -0.008494  0.04071  0.06765  0.09667  0.15242
-    ## s  2.389636  2.65768  2.82103  3.00141  3.39709
+    ## a  0.033722  0.35279  0.82195  1.57866  3.65625
+    ## b  0.047848  0.19599  0.27185  0.34659  0.48981
+    ## c -0.009303  0.02595  0.04437  0.06221  0.09777
+    ## d -1.269243 -0.92531 -0.74090 -0.56571 -0.27173
+    ## e -0.518579 -0.32087 -0.22239 -0.12877  0.04266
+    ## f  0.546148  0.67444  0.74135  0.80946  0.93786
+    ## g -0.003905  0.04273  0.06856  0.09644  0.14802
+    ## s  2.387500  2.65905  2.82045  2.99940  3.39791
 
 ``` r
 plot(sims_time)
 ```
 
-![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-10-2.png)<!-- -->
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-11-2.png)<!-- -->
 
 ``` r
 gelman.diag(sims_time)
@@ -1345,14 +1180,14 @@ gelman.diag(sims_time)
     ## Potential scale reduction factors:
     ## 
     ##   Point est. Upper C.I.
-    ## a          1       1.00
-    ## b          1       1.00
-    ## c          1       1.00
-    ## d          1       1.01
-    ## e          1       1.00
-    ## f          1       1.00
-    ## g          1       1.01
-    ## s          1       1.00
+    ## a       1.01       1.02
+    ## b       1.00       1.00
+    ## c       1.00       1.00
+    ## d       1.00       1.00
+    ## e       1.00       1.01
+    ## f       1.00       1.00
+    ## g       1.00       1.01
+    ## s       1.00       1.00
     ## 
     ## Multivariate psrf
     ## 
@@ -1362,13 +1197,13 @@ gelman.diag(sims_time)
 gelman.plot(sims_time)
 ```
 
-![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-10-3.png)<!-- -->
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-11-3.png)<!-- -->
 
 ``` r
 autocorr.plot(sims_time[[1]])
 ```
 
-![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-10-4.png)<!-- -->
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-11-4.png)<!-- -->
 
 ``` r
 dist_model <- "model{
@@ -1437,32 +1272,32 @@ summary(sims_dist)
     ##    plus standard error of the mean:
     ## 
     ##       Mean      SD  Naive SE Time-series SE
-    ## a  1.07685 0.98935 5.712e-03      0.0361048
-    ## b  0.36921 0.08843 5.105e-04      0.0010874
-    ## c  0.01117 0.01285 7.419e-05      0.0001471
-    ## d -0.75937 0.26931 1.555e-03      0.0135206
-    ## e -0.26185 0.14383 8.304e-04      0.0048782
-    ## f  0.74242 0.09914 5.724e-04      0.0006058
-    ## g  0.07031 0.04121 2.379e-04      0.0018620
-    ## s  2.86809 0.26001 1.501e-03      0.0041504
+    ## a  1.08237 0.97160 5.610e-03      0.0325509
+    ## b  0.36942 0.08931 5.156e-04      0.0011154
+    ## c  0.01129 0.01300 7.504e-05      0.0001511
+    ## d -0.77091 0.28261 1.632e-03      0.0144704
+    ## e -0.25913 0.14990 8.654e-04      0.0050942
+    ## f  0.74069 0.09967 5.754e-04      0.0006074
+    ## g  0.07202 0.04286 2.474e-04      0.0020237
+    ## s  2.87296 0.25929 1.497e-03      0.0044585
     ## 
     ## 2. Quantiles for each variable:
     ## 
-    ##        2.5%       25%      50%      75%     97.5%
-    ## a  0.033289  0.343339  0.79500  1.51380  3.688936
-    ## b  0.194895  0.310940  0.36969  0.42795  0.542062
-    ## c -0.013616  0.002513  0.01114  0.01981  0.036436
-    ## d -1.307188 -0.937902 -0.75420 -0.57465 -0.257877
-    ## e -0.557573 -0.356250 -0.25690 -0.16339  0.005453
-    ## f  0.548909  0.675927  0.74189  0.80994  0.937169
-    ## g -0.007048  0.041438  0.06974  0.09774  0.152510
-    ## s  2.413849  2.686332  2.84720  3.02943  3.433633
+    ##        2.5%       25%      50%      75%    97.5%
+    ## a  0.030665  0.343461  0.81405  1.54543  3.60245
+    ## b  0.193048  0.310273  0.36982  0.42942  0.54205
+    ## c -0.014120  0.002599  0.01128  0.01992  0.03692
+    ## d -1.351581 -0.953759 -0.76586 -0.57723 -0.23769
+    ## e -0.562496 -0.357247 -0.25701 -0.15790  0.02859
+    ## f  0.544807  0.673427  0.74013  0.80854  0.93511
+    ## g -0.009817  0.042918  0.07142  0.10001  0.15905
+    ## s  2.414821  2.690188  2.85329  3.03622  3.42982
 
 ``` r
 plot(sims_dist)
 ```
 
-![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-12-2.png)<!-- -->
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-13-2.png)<!-- -->
 
 ``` r
 gelman.diag(sims_dist)
@@ -1471,27 +1306,27 @@ gelman.diag(sims_dist)
     ## Potential scale reduction factors:
     ## 
     ##   Point est. Upper C.I.
-    ## a       1.01       1.03
-    ## b       1.00       1.00
-    ## c       1.00       1.00
-    ## d       1.00       1.01
-    ## e       1.01       1.02
-    ## f       1.00       1.00
-    ## g       1.00       1.01
-    ## s       1.00       1.00
+    ## a          1       1.01
+    ## b          1       1.00
+    ## c          1       1.00
+    ## d          1       1.01
+    ## e          1       1.00
+    ## f          1       1.00
+    ## g          1       1.01
+    ## s          1       1.00
     ## 
     ## Multivariate psrf
     ## 
-    ## 1.01
+    ## 1
 
 ``` r
 gelman.plot(sims_dist)
 ```
 
-![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-12-3.png)<!-- -->
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-13-3.png)<!-- -->
 
 ``` r
 autocorr.plot(sims_dist[[1]])
 ```
 
-![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-12-4.png)<!-- -->
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-13-4.png)<!-- -->
