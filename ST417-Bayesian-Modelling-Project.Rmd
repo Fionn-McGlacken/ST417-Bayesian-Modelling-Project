@@ -690,7 +690,6 @@ This is very similar to the predictions made from the original posterior distrib
 ### Modelling
 
 ```{r}
-library(dplyr)
 data <- read.csv("origin_weather_data.csv")
 ohe_transport <- model.matrix(~ transport + 0, data = data)
 ohe_day <- model.matrix(~ day + 0, data = data)
