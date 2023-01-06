@@ -58,7 +58,7 @@ the project.
 
 # Data and Prior Description
 
-test \## Subjective Opinion
+## Subjective Opinion
 
 In our opinion, the time, distance and commuting costs should be the
 easiest to analyse as they are the most straightforward variables to
@@ -545,7 +545,7 @@ summary(bayes_df_time)
 prior_post_plot(bayes_df_time, "Time")
 ```
 
-![](ST417-Bayesian-Modelling-Project_files/figure-gfm/time%20posterior-1.png)<!-- -->
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/time_posterior-1.png)<!-- -->
 
 After updating the prior with the data we collected, we can see that the
 posterior distribution is much more concentrated around the mean of the
@@ -835,7 +835,9 @@ The 95% credible intervals and Point Estimates suggest that:
   a cost of €1.71 for an average student’s commute to the University of
   Galway.
 
-## Bayesian Analysis with rjags
+## Modelling with MCMC
+
+### Posterior
 
 Next, we decided to use the rjags package in order to define a Markov
 Chain Monte Carlo (MCMC) model to generate a new set of samples for new
@@ -866,7 +868,7 @@ model {
 
 ``` r
 # data
-data <- list(
+model_data <- list(
   N = nrow(data),
   time = data$time,
   distance = data$distance,
@@ -894,7 +896,7 @@ as well as setting the number of chains to 3.
 # compile model
 jags_model_mc <- jags.model(
   textConnection(model),
-  data = data,
+  data = model_data,
   n.chains = 3
 )
 ```
@@ -956,22 +958,22 @@ summary(sims_mc)
     ##    plus standard error of the mean:
     ## 
     ##                 Mean        SD  Naive SE Time-series SE
-    ## mu_cost     1.510163 0.3667889 2.118e-03      2.118e-03
-    ## mu_dist     9.177727 2.0573832 1.188e-02      1.181e-02
-    ## mu_time    25.191957 2.8390294 1.639e-02      1.639e-02
-    ## sigma_cost  0.103909 0.0158947 9.177e-05      9.177e-05
-    ## sigma_dist  0.003402 0.0005730 3.308e-06      3.328e-06
-    ## sigma_time  0.001763 0.0002958 1.708e-06      1.731e-06
+    ## mu_cost     1.513017 0.3684352 2.127e-03      2.144e-03
+    ## mu_dist     9.194199 2.0475011 1.182e-02      1.175e-02
+    ## mu_time    25.188780 2.8327872 1.636e-02      1.636e-02
+    ## sigma_cost  0.104033 0.0159760 9.224e-05      9.435e-05
+    ## sigma_dist  0.003404 0.0005766 3.329e-06      3.373e-06
+    ## sigma_time  0.001758 0.0002935 1.695e-06      1.722e-06
     ## 
     ## 2. Quantiles for each variable:
     ## 
     ##                 2.5%       25%       50%       75%     97.5%
-    ## mu_cost     0.788870  1.264469  1.508182  1.755664  2.234033
-    ## mu_dist     5.140697  7.796091  9.171906 10.554416 13.216504
-    ## mu_time    19.589738 23.267030 25.191355 27.098087 30.732019
-    ## sigma_cost  0.075161  0.092869  0.103079  0.114185  0.137049
-    ## sigma_dist  0.002378  0.002998  0.003370  0.003766  0.004624
-    ## sigma_time  0.001231  0.001555  0.001744  0.001954  0.002386
+    ## mu_cost     0.786074  1.267233  1.515841  1.757361  2.238687
+    ## mu_dist     5.126950  7.827758  9.194745 10.565870 13.257725
+    ## mu_time    19.642979 23.308967 25.196777 27.072928 30.787986
+    ## sigma_cost  0.074975  0.092828  0.103267  0.114282  0.137488
+    ## sigma_dist  0.002370  0.002999  0.003371  0.003783  0.004611
+    ## sigma_time  0.001229  0.001550  0.001743  0.001947  0.002378
 
 ``` r
 # gelman-rubin statistic
@@ -1031,21 +1033,21 @@ CI_time
 ```
 
     ##     2.5%    97.5% 
-    ## 19.57386 30.83870
+    ## 19.70046 30.67995
 
 ``` r
 CI_dist
 ```
 
     ##      2.5%     97.5% 
-    ##  5.166344 13.284300
+    ##  5.227262 13.267000
 
 ``` r
 CI_cost
 ```
 
     ##      2.5%     97.5% 
-    ## 0.7816886 2.2294802
+    ## 0.7610047 2.2379638
 
 ``` r
 # 95% CI plots
@@ -1089,14 +1091,116 @@ between 19.5 and 30.8 minutes to travel between 5.2 and 13.2 kilometres
 at a cost of between €0.89 and €2.51. This is very similar to the
 predictions made from the original posterior distribution.
 
-## Regression
+### Modelling
 
 ``` r
-library("dplyr")
-new_data <- read.csv("origin_weather_data.csv")
-new_data <- replace(new_data, is.na(new_data), 0)
-# length(unique(c(new_data$est_transport, new_data$est_transport)))
+data <- read.csv("origin_weather_data.csv")
+data[is.na(data)] <- 0
 ```
+
+#### Predicting Cost of Commute
+
+##### One hot encoded model
+
+Firstly, we present a failed model featuring one hot encoded categorical
+variables. We could not get this model to work but include it as a point
+of interest.
+
+``` r
+ohe_transport <- model.matrix(~ transport + 0, data = data)
+ohe_day <- model.matrix(~ day + 0, data = data)
+ohe_weather <- model.matrix(~ weather + 0, data = data)
+# ohe_origin <- model.matrix(~ origin + 0, data = data)
+model_data <- select(data, -c("transport", "day", "weather"))
+model_data <- cbind(model_data, ohe_transport, ohe_day, ohe_weather)
+model_data[is.na(model_data)] <- 0
+```
+
+``` r
+cost_model <- "model{
+  for (i in 1:length(Y)){
+    Y[i] ~ dnorm(m[i], u^(-2))
+    m[i] <- a + b*X1[i] + c*X2[i] + d*X3[i] + e*X4[i] + f*X5[i] + g*X6[i] + h*X7[i] + j*X8[i] + k*X9[i] + l*X10[i] + m*X11[i] + n*X12[i] + o*X13[i] + p*X14[i] + q*X15[i] + r*X16[i] + s*X17[i] + t*X18[i] + u
+  }
+
+  m0_dist <- 14.76
+  s0_dist <- 17.71457
+  m0_time <- 35.3169
+  s0_time <- 29.52084
+
+  a ~ dunif(-100, 100) #intercept
+  b ~ dnorm(m0_time, s0_time^(-2)) # time (min)
+  c ~ dnorm(m0_dist, s0_dist^(-2)) # distance (km)
+  d ~ dnorm(7, 2^(-2)) # temperature (degrees celcius)
+  e ~ dnorm(6, 1^(-2)) # precipitation (mm)
+  f ~ dnorm(0.75, 0.1^(-2)) # percent humidity
+  g ~ dnorm(0.5, 0.1^(-2)) # wind speed (km/h)
+
+  h ~ dunif(-10, 10) # bike
+  j ~ dunif(-10, 10) # bus / coach
+  k ~ dunif(-10, 10) # car
+  l ~ dunif(-10, 10) # train
+  m ~ dunif(-10, 10) # walk
+
+  n ~ dunif(-10, 10) # friday
+  o ~ dunif(-10, 10) # monday
+  p ~ dunif(-10, 10) # thursday
+  q ~ dunif(-10, 10) # tuesday
+  r ~ dunif(-10, 10) # wednesday
+
+  s ~ dunif(-10, 10) # light weather
+  t ~ dunif(-10, 10) # moderate weather
+
+  u ~ dunif(0, 100) # error
+  }"
+```
+
+``` r
+var_data <- list(
+  Y = model_data$cost,
+  X1 = model_data$time,
+  X2 = model_data$distance,
+  X3 = model_data$temp_celcius,
+  X4 = model_data$precipitation_mm,
+  X5 = model_data$perc_humidity,
+  X6 = model_data$wind_kmh,
+  X7 = model_data$transportBike,
+  X8 = model_data$`transportBus / Coach`,
+  X9 = model_data$transportCar,
+  X10 = model_data$transportTrain,
+  X11 = model_data$transportWalk,
+  X12 = model_data$dayFriday,
+  X13 = model_data$dayMonday,
+  X14 = model_data$dayThursday,
+  X15 = model_data$dayTuesday,
+  X16 = model_data$dayWednesday,
+  X17 = model_data$weatherLight,
+  X18 = model_data$weatherModerate
+)
+```
+
+``` r
+print('This code did not work')
+```
+
+    ## [1] "This code did not work"
+
+``` r
+# cost_model_jags <- jags.model(textConnection(cost_model),
+#   data = var_data,
+#   inits = list(
+#     .RNG.name = "Wichmann-Hill",
+#     .RNG.seed = 12345))
+
+# sim_cost <- update(cost_model_jags, 10000)
+
+# n <- 10000
+# sims_cost <- coda.samples(cost_model_jags,
+#   variable.names = c("a", "b", "c", "d", "e", "f", "g", "h", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u"),
+#   n.iter = n)
+```
+
+#### Regular model
 
 ``` r
 cost_model <- "model{
@@ -1121,13 +1225,13 @@ cost_model <- "model{
   }"
 
 cost_model_jags <- jags.model(textConnection(cost_model),
-  data = list(Y = new_data$cost,
-    X1 = new_data$est_time,
-    X2 = new_data$est_distance,
-    X3 = new_data$temp_celcius,
-    X4 = new_data$precipitation_mm,
-    X5 = new_data$perc_humidity,
-    X6 = new_data$wind_kmh),
+  data = list(Y = data$cost,
+    X1 = data$time,
+    X2 = data$distance,
+    X3 = data$temp_celcius,
+    X4 = data$precipitation_mm,
+    X5 = data$perc_humidity,
+    X6 = data$wind_kmh),
   n.chains = 3)
 ```
 
@@ -1137,7 +1241,7 @@ cost_model_jags <- jags.model(textConnection(cost_model),
     ## Graph information:
     ##    Observed stochastic nodes: 72
     ##    Unobserved stochastic nodes: 8
-    ##    Total graph size: 678
+    ##    Total graph size: 694
     ## 
     ## Initializing model
 
@@ -1149,6 +1253,23 @@ sims_cost <- coda.samples(cost_model_jags,
   variable.names = c("a", "b", "c", "d", "e", "f", "g", "s"),
   n.iter = n)
 ```
+
+##### Diagnostics
+
+The gelman diagnostic shows that the chains have converged nicely.
+However, the autocorrelation is high. This is likely due to high
+multicollinearity in the data.
+
+Unfortunately, we cannot conclude from these results that there is a
+relationship between the cost of commute and time or distance, as the
+95% credible intervals for the coefficients overlap 0. This may be due
+to confounding variables such as mode of transportation, which would
+have been accounted for in the one hot encoded model.
+
+However, we can say that the confounding variables of temperature and
+precipitation have a negative effect on the cost of commute. While this
+makes sense for rain, it makes less sense for temperature and may be due
+to random noise in the data.
 
 ``` r
 summary(sims_cost)
@@ -1163,33 +1284,33 @@ summary(sims_cost)
     ## 1. Empirical mean and standard deviation for each variable,
     ##    plus standard error of the mean:
     ## 
-    ##        Mean      SD  Naive SE Time-series SE
-    ## a  1.513662 1.26730 0.0073168      0.0541369
-    ## b -0.004208 0.01618 0.0000934      0.0002366
-    ## c  0.093787 0.02697 0.0001557      0.0003499
-    ## d -0.757269 0.28188 0.0016275      0.0141192
-    ## e -0.187077 0.17016 0.0009824      0.0064153
-    ## f  0.744276 0.09967 0.0005754      0.0006070
-    ## g  0.075548 0.04348 0.0002510      0.0020104
-    ## s  3.006800 0.27395 0.0015816      0.0044886
+    ##       Mean      SD  Naive SE Time-series SE
+    ## a  0.93687 0.88630 0.0051170      0.0278154
+    ## b  0.01669 0.02751 0.0001588      0.0005319
+    ## c  0.06417 0.03971 0.0002293      0.0007587
+    ## d -0.72643 0.28844 0.0016653      0.0143571
+    ## e -0.13844 0.15722 0.0009077      0.0054219
+    ## f  0.74049 0.10001 0.0005774      0.0006033
+    ## g  0.08256 0.04451 0.0002570      0.0020020
+    ## s  3.03947 0.27966 0.0016146      0.0047889
     ## 
     ## 2. Quantiles for each variable:
     ## 
-    ##        2.5%      25%       50%       75%    97.5%
-    ## a  0.049965  0.53319  1.205023  2.167026  4.73254
-    ## b -0.035871 -0.01511 -0.004111  0.006632  0.02751
-    ## c  0.040449  0.07580  0.093827  0.111776  0.14690
-    ## d -1.319847 -0.94419 -0.750723 -0.566929 -0.21181
-    ## e -0.550145 -0.29379 -0.177917 -0.070504  0.12410
-    ## f  0.548941  0.67614  0.744621  0.811398  0.94054
-    ## g -0.008721  0.04584  0.075099  0.104780  0.16128
-    ## s  2.527591  2.81374  2.985478  3.174251  3.60751
+    ##         2.5%       25%      50%      75%    97.5%
+    ## a  2.599e-02  0.283645  0.66721  1.32054  3.34196
+    ## b -3.810e-02 -0.001523  0.01700  0.03516  0.07009
+    ## c -1.293e-02  0.037453  0.06384  0.09033  0.14300
+    ## d -1.310e+00 -0.920960 -0.71936 -0.52294 -0.19114
+    ## e -4.551e-01 -0.242460 -0.13689 -0.03096  0.16464
+    ## f  5.456e-01  0.672827  0.73982  0.80792  0.93686
+    ## g  5.652e-05  0.050929  0.08137  0.11272  0.17197
+    ## s  2.558e+00  2.842774  3.01767  3.21230  3.65464
 
 ``` r
 plot(sims_cost)
 ```
 
-![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-9-2.png)<!-- -->
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-13-2.png)<!-- -->
 
 ``` r
 gelman.diag(sims_cost)
@@ -1198,30 +1319,36 @@ gelman.diag(sims_cost)
     ## Potential scale reduction factors:
     ## 
     ##   Point est. Upper C.I.
-    ## a       1.00       1.00
-    ## b       1.00       1.00
-    ## c       1.00       1.00
-    ## d       1.01       1.03
-    ## e       1.01       1.01
-    ## f       1.00       1.00
-    ## g       1.01       1.02
-    ## s       1.00       1.01
+    ## a          1       1.01
+    ## b          1       1.00
+    ## c          1       1.00
+    ## d          1       1.00
+    ## e          1       1.00
+    ## f          1       1.00
+    ## g          1       1.00
+    ## s          1       1.00
     ## 
     ## Multivariate psrf
     ## 
-    ## 1.01
+    ## 1
 
 ``` r
 gelman.plot(sims_cost)
 ```
 
-![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-9-3.png)<!-- -->
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-13-3.png)<!-- -->
 
 ``` r
 autocorr.plot(sims_cost[[1]])
 ```
 
-![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-9-4.png)<!-- -->
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-13-4.png)<!-- -->
+
+Additional models can be seen below, where the independent variable is
+swapped with one of the dependent variables: time or distance. These
+models also show great convergence and high autocorrelation.
+
+#### Predicting Time of Commute
 
 ``` r
 time_model <- "model{
@@ -1246,13 +1373,13 @@ time_model <- "model{
   }"
 
 time_model_jags <- jags.model(textConnection(time_model),
-  data = list(Y = new_data$cost,
-    X1 = new_data$est_cost,
-    X2 = new_data$est_distance,
-    X3 = new_data$temp_celcius,
-    X4 = new_data$precipitation_mm,
-    X5 = new_data$perc_humidity,
-    X6 = new_data$wind_kmh),
+  data = list(Y = data$cost,
+    X1 = data$est_cost,
+    X2 = data$est_distance,
+    X3 = data$temp_celcius,
+    X4 = data$precipitation_mm,
+    X5 = data$perc_humidity,
+    X6 = data$wind_kmh),
   n.chains = 3)
 ```
 
@@ -1289,32 +1416,32 @@ summary(sims_time)
     ##    plus standard error of the mean:
     ## 
     ##       Mean      SD  Naive SE Time-series SE
-    ## a  1.12419 0.98085 0.0056629      0.0320372
-    ## b  0.26994 0.11396 0.0006579      0.0019365
-    ## c  0.04405 0.02745 0.0001585      0.0003893
-    ## d -0.72360 0.25686 0.0014830      0.0127031
-    ## e -0.23649 0.14671 0.0008470      0.0046649
-    ## f  0.74177 0.09937 0.0005737      0.0006068
-    ## g  0.06581 0.03942 0.0002276      0.0016929
-    ## s  2.83288 0.25788 0.0014889      0.0036929
+    ## a  1.10599 0.98956 0.0057132      0.0339510
+    ## b  0.27433 0.11261 0.0006501      0.0018943
+    ## c  0.04325 0.02720 0.0001570      0.0003898
+    ## d -0.74231 0.27841 0.0016074      0.0143013
+    ## e -0.23092 0.15289 0.0008827      0.0054128
+    ## f  0.74109 0.09988 0.0005767      0.0006033
+    ## g  0.06908 0.04273 0.0002467      0.0020284
+    ## s  2.83803 0.25829 0.0014912      0.0043578
     ## 
     ## 2. Quantiles for each variable:
     ## 
     ##        2.5%      25%      50%      75%    97.5%
-    ## a  0.032143  0.35252  0.83775  1.64363  3.60691
-    ## b  0.043446  0.19462  0.27077  0.34582  0.49322
-    ## c -0.009995  0.02564  0.04419  0.06235  0.09800
-    ## d -1.246138 -0.88977 -0.71403 -0.55470 -0.22479
-    ## e -0.530611 -0.33393 -0.23214 -0.13647  0.04095
-    ## f  0.546369  0.67439  0.74201  0.80836  0.93640
-    ## g -0.010460  0.03957  0.06495  0.09182  0.14547
-    ## s  2.384680  2.65194  2.81279  2.99332  3.38235
+    ## a  0.032757  0.35998  0.84034  1.56933  3.72299
+    ## b  0.053155  0.19863  0.27532  0.35016  0.49365
+    ## c -0.009705  0.02503  0.04316  0.06136  0.09658
+    ## d -1.309007 -0.91983 -0.73214 -0.55557 -0.21799
+    ## e -0.536116 -0.32887 -0.22748 -0.13085  0.06193
+    ## f  0.544407  0.67445  0.74096  0.80797  0.93646
+    ## g -0.011590  0.04025  0.06793  0.09688  0.15669
+    ## s  2.390919  2.65630  2.81784  2.99840  3.40143
 
 ``` r
 plot(sims_time)
 ```
 
-![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-11-2.png)<!-- -->
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-15-2.png)<!-- -->
 
 ``` r
 gelman.diag(sims_time)
@@ -1327,7 +1454,7 @@ gelman.diag(sims_time)
     ## b          1       1.00
     ## c          1       1.00
     ## d          1       1.01
-    ## e          1       1.00
+    ## e          1       1.01
     ## f          1       1.00
     ## g          1       1.01
     ## s          1       1.00
@@ -1340,13 +1467,15 @@ gelman.diag(sims_time)
 gelman.plot(sims_time)
 ```
 
-![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-11-3.png)<!-- -->
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-15-3.png)<!-- -->
 
 ``` r
 autocorr.plot(sims_time[[1]])
 ```
 
-![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-11-4.png)<!-- -->
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-15-4.png)<!-- -->
+
+#### Predicting Distance of Commute
 
 ``` r
 dist_model <- "model{
@@ -1371,13 +1500,13 @@ dist_model <- "model{
   }"
 
 dist_model_jags <- jags.model(textConnection(dist_model),
-  data = list(Y = new_data$cost,
-    X1 = new_data$est_cost,
-    X2 = new_data$est_time,
-    X3 = new_data$temp_celcius,
-    X4 = new_data$precipitation_mm,
-    X5 = new_data$perc_humidity,
-    X6 = new_data$wind_kmh),
+  data = list(Y = data$cost,
+    X1 = data$est_cost,
+    X2 = data$est_time,
+    X3 = data$temp_celcius,
+    X4 = data$precipitation_mm,
+    X5 = data$perc_humidity,
+    X6 = data$wind_kmh),
   n.chains = 3)
 ```
 
@@ -1415,32 +1544,32 @@ summary(sims_dist)
     ##    plus standard error of the mean:
     ## 
     ##       Mean      SD  Naive SE Time-series SE
-    ## a  1.10772 0.99498 0.0057445      0.0331473
-    ## b  0.36803 0.08877 0.0005125      0.0011291
-    ## c  0.01126 0.01297 0.0000749      0.0001508
-    ## d -0.74759 0.26062 0.0015047      0.0119017
-    ## e -0.26982 0.14862 0.0008580      0.0049121
-    ## f  0.74016 0.09951 0.0005745      0.0006079
-    ## g  0.06848 0.03978 0.0002297      0.0016531
-    ## s  2.86584 0.26022 0.0015024      0.0039433
+    ## a  1.14526 1.04486 6.032e-03      0.0363263
+    ## b  0.36803 0.08896 5.136e-04      0.0011126
+    ## c  0.01122 0.01306 7.542e-05      0.0001581
+    ## d -0.78057 0.27989 1.616e-03      0.0148198
+    ## e -0.25973 0.15574 8.992e-04      0.0056409
+    ## f  0.74014 0.10038 5.796e-04      0.0005955
+    ## g  0.07285 0.04307 2.487e-04      0.0019905
+    ## s  2.87500 0.26277 1.517e-03      0.0051176
     ## 
     ## 2. Quantiles for each variable:
     ## 
     ##        2.5%       25%      50%      75%    97.5%
-    ## a  0.032994  0.356586  0.83128  1.57404  3.67531
-    ## b  0.192993  0.309283  0.36794  0.42770  0.54222
-    ## c -0.014007  0.002548  0.01130  0.01990  0.03682
-    ## d -1.272973 -0.918458 -0.73912 -0.57150 -0.25282
-    ## e -0.569216 -0.366360 -0.26771 -0.17040  0.01702
-    ## f  0.545459  0.673063  0.73954  0.80752  0.93406
-    ## g -0.007848  0.041967  0.06731  0.09448  0.14822
-    ## s  2.412733  2.681437  2.84491  3.02921  3.43300
+    ## a  0.031364  0.356766  0.84322  1.63130  3.86920
+    ## b  0.190545  0.309151  0.36931  0.42791  0.54388
+    ## c -0.014800  0.002619  0.01118  0.02001  0.03683
+    ## d -1.369572 -0.960284 -0.77046 -0.58851 -0.26961
+    ## e -0.574685 -0.360817 -0.25737 -0.15463  0.03954
+    ## f  0.543637  0.672419  0.73991  0.80727  0.93617
+    ## g -0.005794  0.043257  0.07163  0.09985  0.16420
+    ## s  2.418264  2.691124  2.85336  3.03612  3.45067
 
 ``` r
 plot(sims_dist)
 ```
 
-![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-13-2.png)<!-- -->
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-17-2.png)<!-- -->
 
 ``` r
 gelman.diag(sims_dist)
@@ -1449,27 +1578,29 @@ gelman.diag(sims_dist)
     ## Potential scale reduction factors:
     ## 
     ##   Point est. Upper C.I.
-    ## a       1.01       1.01
+    ## a       1.00       1.00
     ## b       1.00       1.00
     ## c       1.00       1.00
-    ## d       1.00       1.01
+    ## d       1.01       1.02
     ## e       1.00       1.01
     ## f       1.00       1.00
-    ## g       1.00       1.01
+    ## g       1.01       1.02
     ## s       1.00       1.00
     ## 
     ## Multivariate psrf
     ## 
-    ## 1
+    ## 1.01
 
 ``` r
 gelman.plot(sims_dist)
 ```
 
-![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-13-3.png)<!-- -->
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-17-3.png)<!-- -->
 
 ``` r
 autocorr.plot(sims_dist[[1]])
 ```
 
-![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-13-4.png)<!-- -->
+![](ST417-Bayesian-Modelling-Project_files/figure-gfm/unnamed-chunk-17-4.png)<!-- -->
+
+# Conclusion

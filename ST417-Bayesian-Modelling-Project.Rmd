@@ -52,7 +52,7 @@ In order to explore the effects of the different variables associated with commu
 8.  Compare differences between year groups and see which year has the greatest travel times.
 
 # Data and Prior Description
-test
+
 ## Subjective Opinion
 
 In our opinion, the time, distance and commuting costs should be the easiest to analyse as they are the most straightforward variables to measure. We believe that the confounding variables will be more difficult to analyse as they are harder to measure. For example, weather and traffic data must be sourced online.
@@ -357,7 +357,7 @@ prob_plot(bayes_df_time)
 
 We will now update the prior distribution with the likelihood of the data to get a posterior distribution.
 
-```{r time posterior}
+```{r time_posterior}
 xbar_time <- mean(data$time, na.rm = TRUE)
 n_time <- NROW(data$time)
 sigma_time <- sd(data$time, na.rm = TRUE)
@@ -535,7 +535,9 @@ The 95% credible intervals and Point Estimates suggest that:
 * The average distance of a commute should be between 5.37 and 13.17 kilometres, with a commute length of 9.17 kilometres on average.
 * The average cost of a commute should be between €0.89 and €2.52, with a cost of €1.71 for an average student's commute to the University of Galway.
 
-## Bayesian Analysis with rjags
+## Modelling with MCMC
+
+### Posterior
 
 Next, we decided to use the rjags package in order to define a Markov Chain Monte Carlo (MCMC) model to generate a new set of samples for new posterior distributions for the average commute time, distance and cost.
 This will enable us to see how representitive the data we collected when compared to a much larger sample size. We will do this by comparing the results of the rjags model to the results of the initial Bayesian analysis.
@@ -565,7 +567,7 @@ model {
 
 ```{r model data}
 # data
-data <- list(
+model_data <- list(
   N = nrow(data),
   time = data$time,
   distance = data$distance,
@@ -591,7 +593,7 @@ After defining the values of all variables in the model definition, we will now 
 # compile model
 jags_model_mc <- jags.model(
   textConnection(model),
-  data = data,
+  data = model_data,
   n.chains = 3
 )
 ```
@@ -685,14 +687,108 @@ ggplot(chains, aes(x = mu_cost)) +
 The 95% credible interval plots show that the average student takes between 19.5 and 30.8 minutes to travel between 5.2 and 13.2 kilometres at a cost of between €0.89 and €2.51. 
 This is very similar to the predictions made from the original posterior distribution.
 
-## Regression
+### Modelling
 
 ```{r}
-library("dplyr")
-new_data <- read.csv("origin_weather_data.csv")
-new_data <- replace(new_data, is.na(new_data), 0)
-# length(unique(c(new_data$est_transport, new_data$est_transport)))
+data <- read.csv("origin_weather_data.csv")
+data[is.na(data)] <- 0
 ```
+
+#### Predicting Cost of Commute
+
+##### One hot encoded model 
+Firstly, we present a failed model featuring one hot encoded categorical variables. We could not get this model to work but include it as a point of interest.
+
+```{r}
+ohe_transport <- model.matrix(~ transport + 0, data = data)
+ohe_day <- model.matrix(~ day + 0, data = data)
+ohe_weather <- model.matrix(~ weather + 0, data = data)
+# ohe_origin <- model.matrix(~ origin + 0, data = data)
+model_data <- select(data, -c("transport", "day", "weather"))
+model_data <- cbind(model_data, ohe_transport, ohe_day, ohe_weather)
+model_data[is.na(model_data)] <- 0
+```
+
+```{r}
+cost_model <- "model{
+  for (i in 1:length(Y)){
+    Y[i] ~ dnorm(m[i], u^(-2))
+    m[i] <- a + b*X1[i] + c*X2[i] + d*X3[i] + e*X4[i] + f*X5[i] + g*X6[i] + h*X7[i] + j*X8[i] + k*X9[i] + l*X10[i] + m*X11[i] + n*X12[i] + o*X13[i] + p*X14[i] + q*X15[i] + r*X16[i] + s*X17[i] + t*X18[i] + u
+  }
+
+  m0_dist <- 14.76
+  s0_dist <- 17.71457
+  m0_time <- 35.3169
+  s0_time <- 29.52084
+
+  a ~ dunif(-100, 100) #intercept
+  b ~ dnorm(m0_time, s0_time^(-2)) # time (min)
+  c ~ dnorm(m0_dist, s0_dist^(-2)) # distance (km)
+  d ~ dnorm(7, 2^(-2)) # temperature (degrees celcius)
+  e ~ dnorm(6, 1^(-2)) # precipitation (mm)
+  f ~ dnorm(0.75, 0.1^(-2)) # percent humidity
+  g ~ dnorm(0.5, 0.1^(-2)) # wind speed (km/h)
+
+  h ~ dunif(-10, 10) # bike
+  j ~ dunif(-10, 10) # bus / coach
+  k ~ dunif(-10, 10) # car
+  l ~ dunif(-10, 10) # train
+  m ~ dunif(-10, 10) # walk
+
+  n ~ dunif(-10, 10) # friday
+  o ~ dunif(-10, 10) # monday
+  p ~ dunif(-10, 10) # thursday
+  q ~ dunif(-10, 10) # tuesday
+  r ~ dunif(-10, 10) # wednesday
+
+  s ~ dunif(-10, 10) # light weather
+  t ~ dunif(-10, 10) # moderate weather
+
+  u ~ dunif(0, 100) # error
+  }"
+```
+
+```{r}
+var_data <- list(
+  Y = model_data$cost,
+  X1 = model_data$time,
+  X2 = model_data$distance,
+  X3 = model_data$temp_celcius,
+  X4 = model_data$precipitation_mm,
+  X5 = model_data$perc_humidity,
+  X6 = model_data$wind_kmh,
+  X7 = model_data$transportBike,
+  X8 = model_data$`transportBus / Coach`,
+  X9 = model_data$transportCar,
+  X10 = model_data$transportTrain,
+  X11 = model_data$transportWalk,
+  X12 = model_data$dayFriday,
+  X13 = model_data$dayMonday,
+  X14 = model_data$dayThursday,
+  X15 = model_data$dayTuesday,
+  X16 = model_data$dayWednesday,
+  X17 = model_data$weatherLight,
+  X18 = model_data$weatherModerate
+)
+```
+
+```{r}
+print('This code did not work')
+# cost_model_jags <- jags.model(textConnection(cost_model),
+#   data = var_data,
+#   inits = list(
+#     .RNG.name = "Wichmann-Hill",
+#     .RNG.seed = 12345))
+
+# sim_cost <- update(cost_model_jags, 10000)
+
+# n <- 10000
+# sims_cost <- coda.samples(cost_model_jags,
+#   variable.names = c("a", "b", "c", "d", "e", "f", "g", "h", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u"),
+#   n.iter = n)
+```
+
+#### Regular model
 
 ```{r}
 cost_model <- "model{
@@ -717,13 +813,13 @@ cost_model <- "model{
   }"
 
 cost_model_jags <- jags.model(textConnection(cost_model),
-  data = list(Y = new_data$cost,
-    X1 = new_data$est_time,
-    X2 = new_data$est_distance,
-    X3 = new_data$temp_celcius,
-    X4 = new_data$precipitation_mm,
-    X5 = new_data$perc_humidity,
-    X6 = new_data$wind_kmh),
+  data = list(Y = data$cost,
+    X1 = data$time,
+    X2 = data$distance,
+    X3 = data$temp_celcius,
+    X4 = data$precipitation_mm,
+    X5 = data$perc_humidity,
+    X6 = data$wind_kmh),
   n.chains = 3)
 
 sim_cost <- update(cost_model_jags, 10000)
@@ -733,6 +829,14 @@ sims_cost <- coda.samples(cost_model_jags,
   variable.names = c("a", "b", "c", "d", "e", "f", "g", "s"),
   n.iter = n)
 ```
+
+##### Diagnostics
+
+The gelman diagnostic shows that the chains have converged nicely. However, the autocorrelation is high. This is likely due to high multicollinearity in the data.
+
+Unfortunately, we cannot conclude from these results that there is a relationship between the cost of commute and time or distance, as the 95% credible intervals for the coefficients overlap 0. This may be due to confounding variables such as mode of transportation, which would have been accounted for in the one hot encoded model. 
+
+However, we can say that the confounding variables of temperature and precipitation have a negative effect on the cost of commute. While this makes sense for rain, it makes less sense for temperature and may be due to random noise in the data.
 
 ```{r}
 summary(sims_cost)
@@ -745,6 +849,10 @@ gelman.plot(sims_cost)
 autocorr.plot(sims_cost[[1]])
 
 ```
+
+Additional models can be seen below, where the independent variable is swapped with one of the dependent variables: time or distance. These models also show great convergence and high autocorrelation.
+
+#### Predicting Time of Commute
 
 ```{r}
 time_model <- "model{
@@ -769,13 +877,13 @@ time_model <- "model{
   }"
 
 time_model_jags <- jags.model(textConnection(time_model),
-  data = list(Y = new_data$cost,
-    X1 = new_data$est_cost,
-    X2 = new_data$est_distance,
-    X3 = new_data$temp_celcius,
-    X4 = new_data$precipitation_mm,
-    X5 = new_data$perc_humidity,
-    X6 = new_data$wind_kmh),
+  data = list(Y = data$cost,
+    X1 = data$est_cost,
+    X2 = data$est_distance,
+    X3 = data$temp_celcius,
+    X4 = data$precipitation_mm,
+    X5 = data$perc_humidity,
+    X6 = data$wind_kmh),
   n.chains = 3)
 
 sim_time <- update(time_model_jags, 10000)
@@ -796,6 +904,8 @@ gelman.plot(sims_time)
 
 autocorr.plot(sims_time[[1]])
 ```
+
+#### Predicting Distance of Commute
 
 ```{r}
 dist_model <- "model{
@@ -820,13 +930,13 @@ dist_model <- "model{
   }"
 
 dist_model_jags <- jags.model(textConnection(dist_model),
-  data = list(Y = new_data$cost,
-    X1 = new_data$est_cost,
-    X2 = new_data$est_time,
-    X3 = new_data$temp_celcius,
-    X4 = new_data$precipitation_mm,
-    X5 = new_data$perc_humidity,
-    X6 = new_data$wind_kmh),
+  data = list(Y = data$cost,
+    X1 = data$est_cost,
+    X2 = data$est_time,
+    X3 = data$temp_celcius,
+    X4 = data$precipitation_mm,
+    X5 = data$perc_humidity,
+    X6 = data$wind_kmh),
   n.chains = 3)
 
 sim_dist <- update(dist_model_jags, 10000)
@@ -848,3 +958,5 @@ gelman.plot(sims_dist)
 
 autocorr.plot(sims_dist[[1]])
 ```
+
+# Conclusion
