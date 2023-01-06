@@ -705,7 +705,7 @@ ohe_day <- model.matrix(~ day + 0, data = data)
 ohe_weather <- model.matrix(~ weather + 0, data = data)
 # ohe_origin <- model.matrix(~ origin + 0, data = data)
 model_data <- select(data, -c("transport", "day", "weather"))
-model_data <- cbind(temp_df, ohe_transport, ohe_day, ohe_weather)
+model_data <- cbind(model_data, ohe_transport, ohe_day, ohe_weather)
 model_data[is.na(model_data)] <- 0
 ```
 
@@ -958,3 +958,5 @@ gelman.plot(sims_dist)
 
 autocorr.plot(sims_dist[[1]])
 ```
+
+# Conclusion
