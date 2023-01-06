@@ -958,5 +958,3 @@ gelman.plot(sims_dist)
 
 autocorr.plot(sims_dist[[1]])
 ```
-
-# Conclusion
